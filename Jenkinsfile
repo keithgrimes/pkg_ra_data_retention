@@ -64,7 +64,7 @@ pipeline {
   	}
   	success {
   		echo "Completed Succcessfully"
-  		cleanWs()
+  		//cleanWs()
   	}
   	failure {
   	    echo "Completed with Failure"

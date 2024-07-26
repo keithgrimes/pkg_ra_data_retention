@@ -16,7 +16,7 @@ pipeline {
     stage('Update version information') {
       steps {
             sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention/packages/com_ra_data_retention/com_ra_data_retention.xml'
-            sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention/packages/plg_dataretention/plg_dataretention.xml'
+            sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention/packages/plg_dataretention/dataretention.xml'
             sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention/pkg_ra_data_retention.xml'
       }
     }

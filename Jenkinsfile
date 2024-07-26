@@ -36,13 +36,13 @@ pipeline {
 		      sh 'rm -r plg_dataretention'
 		    } 
 
-		    dir('..') {
+//		    dir('..') {
           sh 'pwd'
           sh 'ls -al'
 //          sh 'rm -r .git'
 		      // Now zip the main package
           sh 'zip -r pkg_ra_data_retention.zip .'
-        }
+//        }
       }
     }
 

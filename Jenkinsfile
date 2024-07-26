@@ -9,7 +9,7 @@ pipeline {
 	    // Use the master branch to get the sources. Ensure the media is attached into the pi.
         dir('pkg_ra_data_retention') {
           // Checkout to the right directory
-	      git(url: 'https://github.com/keithgrimes/pkg_ra_data_retention', branch: 'master')
+	      git(url: 'https://github.com/keithgrimes/pkg_ra_data_retention', branch: 'main')
 		}
       }
     }

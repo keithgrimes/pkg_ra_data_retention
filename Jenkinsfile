@@ -47,13 +47,13 @@ pipeline {
 
     stage('Repository Store') {
     	steps {
-    	  script {
-    	      dir('tmp'){
-    	        sh 'rm -f *.zip'
-    	      }
-          }
-          sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention/pkg_ra_data_retention.xml -z tmp' 
-          fileOperations([fileCopyOperation(excludes: '', flattenFiles: true, includes: 'tmp/*.zip', targetLocation: params.BINARY_STORE)])
+//    	  script {
+//    	      dir('tmp'){
+//    	        sh 'rm -f *.zip'
+//    	      }
+//         }
+//         sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention/pkg_ra_data_retention.xml -z tmp' 
+          fileOperations([fileCopyOperation(excludes: '', flattenFiles: true, includes: '*.zip', targetLocation: params.BINARY_STORE)])
     	}
     }
   } // End of Stages

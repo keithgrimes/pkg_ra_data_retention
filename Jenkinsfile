@@ -4,16 +4,16 @@ pipeline {
         string(name: 'BINARY_STORE', defaultValue: '/Binaries', trim: true)
   }
   stages {
-    stage('Extract Sources') {
-      steps {
-	    // Use the master branch to get the sources. Ensure the media is attached into the pi.
-        dir('pkg_ra_data_retention') {
-          // Checkout to the right directory
-	      //git(url: 'https://github.com/keithgrimes/pkg_ra_data_retention', branch: 'main')
-	      //git(url: 'https://github.com/keithgrimes/pkg_ra_data_retention')
-		}
-      }
-    }
+/*    stage('Extract Sources') {
+        steps {
+        // Use the master branch to get the sources. Ensure the media is attached into the pi.
+          dir('pkg_ra_data_retention') {
+            // Checkout to the right directory
+          //git(url: 'https://github.com/keithgrimes/pkg_ra_data_retention', branch: 'main')
+          //git(url: 'https://github.com/keithgrimes/pkg_ra_data_retention')
+            }
+        }
+    } */
     stage('Update version information') {
       steps {
             sh 'python2 /home/UpdateJoomlaBuild -bx -i packages/com_ra_data_retention/com_ra_data_retention.xml'
@@ -36,7 +36,7 @@ pipeline {
 		      sh 'rm -r plg_dataretention'
 		    } 
 
-		    dir('pkg_ra_data_retention') {
+		    dir('..') {
           sh 'pwd'
           sh 'ls -al'
 //          sh 'rm -r .git'

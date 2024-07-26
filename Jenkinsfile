@@ -38,7 +38,7 @@ pipeline {
 
 		    dir('..') {
           sh 'pwd'
-          sh 'rm -r .git'
+//          sh 'rm -r .git'
 		      // Now zip the main package
           sh 'zip -r pkg_ra_data_retention.zip .'
         }

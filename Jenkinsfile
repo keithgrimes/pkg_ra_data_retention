@@ -37,7 +37,6 @@ pipeline {
 		    } 
 
 		    dir('pkg_ra_data_retention') {
- {
           sh 'pwd'
           sh 'ls -al'
 //          sh 'rm -r .git'

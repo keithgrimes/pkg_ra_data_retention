@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension type="package" version="2.5" method="upgrade">
+	<name>Ramblers Data Retention</name>
+	<author>Keith Grimes</author>
+	<creationDate>August 2024</creationDate>
+	<copyright>Copyright (C) 2024 by Keith Grimes</copyright>
+	<license>GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html</license>
+	<packagename>ra_data_retention</packagename>
+	<version>1.0.0</version>
+	<url></url>
+	<packager>Keith Grimes</packager>
+	<packagerurl></packagerurl>
+	<description>Ramblers Data Retention Package successfully installed!&lt;br /&gt;&lt;br /&gt;&lt;div&gt;This package contains all extensions constituting the Ramblers Data Retention functionality. It provides ability to remove articles, files and other items which are outside of a retention period.&lt;/div&gt;&lt;br /&gt;&lt;div&gt;&lt;em&gt;If you have any questions or problems, please visit the &lt;a href='https:ne.wiltsswindonramblers.org.uk'&gt;project site&lt;/a&gt;.&lt;br /&gt;In case you want to uninstall Ramblers Data Retention, please use the Package to uninstall all extensions at once!&lt;br /&gt;Ramblers Data Retention is published under the &lt;a target='_blank' title='GNU General Public License' href='http://www.gnu.org/copyleft/gpl.html'&gt;GNU General Public License&lt;/a&gt;.&lt;/div&gt;</description>
+	<files folder="packages">
+		<file type="component" id="com_ra_data_retention">com_ra_data_retention.zip</file>
+		<file type="plugin" id="plg_ra_data_retention">plg_ra_data_retention.zip</file>
+	</files>
+    <updateservers>
+        <server type="extension" name="RA Data Retention" priority="1">https://raw.githubusercontent.com/ramblerswebs/updates/master/updates/pkg-ra-data-retention.xml</server>
+    </updateservers>
+</extension>

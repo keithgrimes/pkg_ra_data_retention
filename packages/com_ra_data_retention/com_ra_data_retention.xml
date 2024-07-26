@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension client="administrator" method="upgrade" type="component" version="4.0">
+	<name>com_ra_data_retention</name>
+	<author>Keith Grimes</author>
+	<description>COM_RA_DATA_RETENTION_DESC</description>
+	<creationDate>22 May 2024</creationDate>
+	<copyright>Copyright (C) 2019 by Keith Grimes</copyright>
+	<license>GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html</license>
+	<homepage />
+	<authorEmail>webmaster@wiltsswindonramblers.org.uk</authorEmail>
+	<authorUrl />
+	<version>2.0.0</version>
+    <namespace path="src">Ramblerswebs\Component\Ra_data_retention</namespace>
+	<install> 
+		<sql>
+			<file charset="utf8" driver="mysql">sql/install.mysql.utf8.sql</file>
+		</sql>
+	</install>
+	<uninstall> 
+		<sql>
+			<file charset="utf8" driver="mysql">sql/uninstall.mysql.utf8.sql</file>
+		</sql>
+	</uninstall>
+	<update> 
+		<schemas>
+			<schemapath type="mysql">sql/updates</schemapath>
+		</schemas>
+	</update>
+    <files folder="site">
+        <folder>src</folder>
+        
+        <folder>tmpl</folder>
+    </files>
+    <media destination="com_ra_data_retention" folder="media">
+        <folder>css</folder>
+        <folder>js</folder>
+        <filename>joomla.asset.json</filename>
+    </media>
+    <languages folder="site/languages">
+			<language tag="en-GB">en-GB/com_ra_data_retention.ini</language>
+    </languages>
+	<administration>
+		<menu>COM_RA_DATA_RETENTION</menu>
+		<submenu>
+			<menu view="articleretentions">COM_RA_DATA_RETENTION_SUBMENU_ARTICLE_RETENTION</menu>
+			<menu view="photoretentions">COM_RA_DATA_RETENTION_SUBMENU_PHOTO_RETENTION</menu>
+			<menu view="weblinkretentions">COM_RA_DATA_RETENTION_SUBMENU_WEBLINK_RETENTION</menu>
+			<menu view="calculatedretentions">COM_RA_DATA_RETENTION_SUBMENU_CALCULATED_RETENTION</menu>
+			<menu view="filepaths">COM_RA_DATA_RETENTION_SUBMENU_FILEPATHS</menu>
+			<menu view="filetables">COM_RA_DATA_RETENTION_SUBMENU_FILETABLES</menu>
+			<menu view="settings">COM_RA_DATA_RETENTION_SUBMENU_SETTINGS</menu>
+		</submenu>
+		<files folder="administrator">
+            <filename>access.xml</filename>
+            <filename>config.xml</filename>
+<!--		<filename component="com_ra_data_retention">ra_data_retention.php</filename>
+			<filename>index.html</filename> -->
+			<folder>forms</folder>
+			<folder>src</folder>
+			<folder>tmpl</folder>
+			<folder>services</folder>
+			<folder>presets</folder>
+			<folder>sql</folder>
+		</files>
+		<languages folder="administrator/languages">
+			<language tag="en-GB">en-GB/com_ra_data_retention.ini</language>
+			<language tag="en-GB">en-GB/com_ra_data_retention.sys.ini</language>
+		</languages>
+	</administration>
+	<config>
+		<fields name="params">
+			<fieldset name="component">
+				<field name="save_history" default="0" />
+			</fieldset>
+		</fields>
+	</config>
+	<plugins>
+	</plugins>
+</extension>

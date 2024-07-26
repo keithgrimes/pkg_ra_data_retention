@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fields name="filter">
+		<field
+			name="search"
+			type="text"
+			label="COM_BANNERS_SEARCH_IN_TITLE"
+			hint="JSEARCH_FILTER"
+			class="js-stools-search-string"
+		/>
+		<field
+			name="type"
+			type="list"
+			label="JOPTION_SELECT_PUBLISHED"
+			description="JOPTION_SELECT_PUBLISHED_DESC"
+			onchange="this.form.submit();"
+			default="ARTICLE"
+			>
+			<option value="ARTICLE">ARTICLE</option>
+			<option value="PHOTO">PHOTO</option>
+			<option value="WEBLINK">WEBLINK</option>
+		</field>
+		<field
+			name="isCalculated"
+			type="list"
+			label="JOPTION_SELECT_PUBLISHED"
+			description="JOPTION_SELECT_PUBLISHED_DESC"
+			onchange="this.form.submit();"
+			default="No"
+			>
+			<option value="0">No</option>
+			<option value="1">Yes</option>
+		</field>
+	</fields>
+	<fields name="list">
+        <field name="fullordering"
+               type="list"
+               label="COM_RA_DATA_RETENTION_LIST_FULL_ORDERING"
+               description="COM_RA_DATA_RETENTION_LIST_FULL_ORDERING_DESC"
+               onchange="this.form.submit();"
+               default="a.id DESC"
+        >
+            <option value="">JGLOBAL_SORT_BY</option>
+            <option value="r.id ASC">COM_RA_DATA_RETENTION_ID_ASC</option>
+            <option value="r.id DESC">COM_RA_DATA_RETENTION_ID_DESC</option>
+            <option value="category_path ASC">COM_RA_DATA_RETENTION_CATEGORY_ASC</option>
+            <option value="category_path DESC">COM_RA_DATA_RETENTION_CATEGORY_DESC</option>
+            <option value="r.months ASC">COM_RA_DATA_RETENTION_MONTHS_ASC</option>
+            <option value="r.months DESC">COM_RA_DATA_RETENTION_MONTHS_DESC</option>
+
+
+        </field>
+		<field
+			name="limit"
+			type="limitbox"
+			class="input-mini"
+			default="25"
+			label="COM_CONTENT_LIST_LIMIT"
+			description="COM_HELLOWORLD_LIST_LIMIT_DESC"
+			onchange="this.form.submit();"
+		/>
+	</fields>
+</form>

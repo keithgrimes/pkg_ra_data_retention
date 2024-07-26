@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="task" method="upgrade">
+	<name>plg_task_dataretention</name>
+	<author>Keith Grimes</author>
+	<creationDate>2024-07</creationDate>
+	<copyright>(C) 2023 Open Source Matters, Inc.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<authorEmail>webmaster@wiltsswindonramblers.org.uk</authorEmail>
+	<authorUrl>www.wiltsswindonramblers.org.uk</authorUrl>
+	<version>0.0.1</version>
+	<description>PLG_TASK_DATARETENTION_XML_DESCRIPTION</description>
+	<namespace path="src">Ramblerswebs\Plugin\Task\DataRetention</namespace>
+	<files>
+		<folder>forms</folder>
+		<folder plugin="dataretention">services</folder>
+		<folder>src</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_task_dataretention.ini</language>
+		<language tag="en-GB">language/en-GB/plg_task_dataretention.sys.ini</language>
+	</languages>
+</extension>

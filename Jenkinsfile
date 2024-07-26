@@ -36,7 +36,8 @@ pipeline {
 		      sh 'rm -r plg_dataretention'
 		    } 
 
-		    dir('pkg_ra_data_retention') {
+		    dir('..') {
+          sh 'pwd'
           sh 'rm -r .git'
 		      // Now zip the main package
           sh 'zip -r pkg_ra_data_retention.zip .'

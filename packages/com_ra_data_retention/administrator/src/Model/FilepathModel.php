@@ -274,7 +274,6 @@ class FilepathModel extends AdminModel
 		// Determine whether we are running in test mode or not.
 		$params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
-		$maxretention = $params->get('maxretention', 0);
 
 		// Call the parent function to save the data.
 		$status =  parent::save($data);

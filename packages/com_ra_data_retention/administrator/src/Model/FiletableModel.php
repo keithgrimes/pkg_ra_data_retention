@@ -277,7 +277,6 @@ class FiletableModel extends AdminModel
 	{
 		// Determine whether we are running in test mode or not.
 		$params = ComponentHelper::getParams('com_ra_data_retention');
-		$testmode = $params->get('testmode', 0);
 
 		$status =  parent::save($data);
 

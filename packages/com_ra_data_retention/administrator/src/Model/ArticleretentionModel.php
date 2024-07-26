@@ -291,13 +291,25 @@ class ArticleretentionModel extends AdminModel
 		}
 		return parent::validate($form, $data);		
 	}
-	
+	private function readConfigSetting($setting, $default) : int
+    {
+        $params = ComponentHelper::getParams('com_ra_data_retention');
+		$testmode = $params->get('testmode', 0);
+
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true);
+
+        $conditions = array(
+            $db->quoteName('setting') . ' = ' . $db->quote(strtoupper($setting)),
+            $db->quoteName('testmode') . ' = ' . $testmode
+        );
+	}
 	public function save($data)
 	{
 		// Determine whether we are running in test mode or not.
 		$params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
-		$maxretention = $params->get('maxretention', 0);
+		$maxretention = $this->readConfigSetting('maxretention', 0);
 
 		// Call the parent function to save the data.
 		$data['type'] = "ARTICLE";

@@ -108,7 +108,7 @@ class CalculatedretentionsModel extends ListModel
 		
 	}
 
-	private function readConfigSetting($setting, $default) : int
+    private function readConfigSetting($setting, $default) : int
     {
         $params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
@@ -120,7 +120,21 @@ class CalculatedretentionsModel extends ListModel
             $db->quoteName('setting') . ' = ' . $db->quote(strtoupper($setting)),
             $db->quoteName('testmode') . ' = ' . $testmode
         );
-	}
+
+        $query->select($db->quoteName('value'));
+        $query->from($db->quoteName('#__ra_retention_settings'));
+        $query->where($conditions);
+        
+        $db->setQuery($query);
+
+        $result = $db->loadResult();
+        if (is_null($result)) $result = $default;
+
+        unset($query);
+        unset($db);
+
+        return $result;
+    }
 
 	/**
 	 * Build an SQL query to load the list data.
@@ -136,7 +150,7 @@ class CalculatedretentionsModel extends ListModel
 		// Determine whether we are running in test mode or not.
 		$params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
-		$maxretention = $this->readConfigSetting('maxretention', 0);
+		$maxretention = $this->readConfigSetting('MAXRETENTION', 0);
 
 		ra_data_retentionHelper::CalculateFullRetentions("ARTICLE", $maxretention, $testmode);
 		ra_data_retentionHelper::CalculateFullRetentions("PHOTO", $maxretention, $testmode);

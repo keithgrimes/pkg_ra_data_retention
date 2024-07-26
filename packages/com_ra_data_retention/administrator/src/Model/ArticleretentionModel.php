@@ -291,7 +291,7 @@ class ArticleretentionModel extends AdminModel
 		}
 		return parent::validate($form, $data);		
 	}
-	private function readConfigSetting($setting, $default) : int
+    private function readConfigSetting($setting, $default) : int
     {
         $params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
@@ -303,7 +303,22 @@ class ArticleretentionModel extends AdminModel
             $db->quoteName('setting') . ' = ' . $db->quote(strtoupper($setting)),
             $db->quoteName('testmode') . ' = ' . $testmode
         );
-	}
+
+        $query->select($db->quoteName('value'));
+        $query->from($db->quoteName('#__ra_retention_settings'));
+        $query->where($conditions);
+        
+        $db->setQuery($query);
+
+        $result = $db->loadResult();
+        if (is_null($result)) $result = $default;
+
+        unset($query);
+        unset($db);
+
+        return $result;
+    }
+
 	public function save($data)
 	{
 		// Determine whether we are running in test mode or not.

@@ -6,7 +6,7 @@
 	<copyright>Copyright (C) 2024 by Keith Grimes</copyright>
 	<license>GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html</license>
 	<packagename>ra_data_retention</packagename>
-	<version>1.0.0</version>
+	<version>2.0.0</version>
 	<url></url>
 	<packager>Keith Grimes</packager>
 	<packagerurl></packagerurl>

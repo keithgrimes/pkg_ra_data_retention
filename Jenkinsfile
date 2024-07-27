@@ -16,9 +16,9 @@ pipeline {
     } */
     stage('Update version information') {
       steps {
-            sh 'python2 /home/UpdateJoomlaBuild -bx -i packages/com_ra_data_retention/com_ra_data_retention.xml'
-            sh 'python2 /home/UpdateJoomlaBuild -bx -i packages/plg_dataretention/dataretention.xml'
-            sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention.xml'
+            sh 'python3 /home/UpdateJoomlaBuild -bx -i packages/com_ra_data_retention/com_ra_data_retention.xml'
+            sh 'python3 /home/UpdateJoomlaBuild -bx -i packages/plg_dataretention/dataretention.xml'
+            sh 'python3 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention.xml'
       }
     }
     stage('Package Zip File') {
@@ -53,7 +53,7 @@ pipeline {
     	        sh 'rm -f *.zip'
     	      }
           }
-          sh 'python2 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention.xml -z output' 
+          sh 'python3 /home/UpdateJoomlaBuild -bx -i pkg_ra_data_retention.xml -z output' 
           fileOperations([fileCopyOperation(excludes: '', flattenFiles: true, includes: 'output/*.zip', targetLocation: params.BINARY_STORE)])
     	}
     }

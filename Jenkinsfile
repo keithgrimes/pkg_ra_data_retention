@@ -23,6 +23,10 @@ pipeline {
 		      sh 'rm -r plg_dataretention'
 		    } 
 
+        // Remove the Jenkins File
+        sh 'rm -f Jenkinsfile'
+        // Remove the temp location
+        sh 'rm -rf package@tmp'
 		    // Now zip the main package
         sh 'zip -r pkg_ra_data_retention.zip .'
       }

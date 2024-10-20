@@ -309,7 +309,9 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $query->delete('#__j2store_addresses');
             $valid_addresses = $query->bindArray($results);
             $query->where($db->quoteName('j2store_address_id') . ' NOT IN (' . implode(',', $valid_addresses) . ')');
+            
             // Execute the delete
+            $db->setQuery($query);
             $result = $db->execute();
         }
         catch (Error $e)

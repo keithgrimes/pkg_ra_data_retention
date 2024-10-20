@@ -216,6 +216,82 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $db->setQuery($query);
     
             $result = $db->execute();
+
+            // Now remove child table information for the orders removed
+            $this->removeJ2StoreOrderChild('#__j2store_orderinfos', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_ordertaxes', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_ordershippings', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_orderitems', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_orderitemattributes', 'orderitem_id', '#__j2store_orderitems', 'j2store_orderitem_id');
+            $this->removeJ2StoreOrderChild('#__j2store_orderhistories', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_orderdownloads', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_orderfees', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_orderdiscounts', 'order_id', '#__j2store_orders', 'order_id');
+            $this->removeJ2StoreOrderChild('#__j2store_cartitems', 'cart_id', '#__j2store_carts', 'j2store_cart_id');
+            // Now clear the address / customer table down
+            $this->removeJ2StoreAddresses('#__j2store_addresses');
+        }
+        catch (Error $e)
+        {
+            unset($query);
+            unset($db);    
+            return Status::INVALID_EXIT;
+        }
+        unset($query);
+        unset($db);    
+    
+        return Status::OK;
+    }
+
+    private function removeJ2StoreOrderChild($parenttable, $parentcol, $childtable, $childcol) : int
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true);
+        try {
+            // Set the state to Trashed and the modified date to the current date and time.
+            $conditions = array(
+                $db->quoteName($parentcol) . ' NOT IN (SELECT ' . $db->quoteName($childcol) . ' FROM ' . $db->quoteName($childtable) . ')'
+            );
+
+            $query->delete($db->quoteName($parenttable));
+            $query->where($conditions);
+    
+            $db->setQuery($query);
+    
+            $result = $db->execute();
+        }
+        catch (Error $e)
+        {
+            unset($query);
+            unset($db);    
+            return Status::INVALID_EXIT;
+        }
+        unset($query);
+        unset($db);    
+    
+        return Status::OK;
+    }
+
+    private function removeJ2StoreAddresses($table) : int
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true);
+        try {
+            // Set the state to Trashed and the modified date to the current date and time.
+            $conditions = array(
+                $db->quoteName('j2store_address_id') . ' NOT IN (SELECT ' . 
+                        $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_manufacturers') .
+                        ' UNION SELECT '. 
+                        $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_vendors') . 
+                        ')'
+            );
+
+            $query->delete($db->quoteName($table));
+            $query->where($conditions);
+    
+            $db->setQuery($query);
+    
+            $result = $db->execute();
         }
         catch (Error $e)
         {

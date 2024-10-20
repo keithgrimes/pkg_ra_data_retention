@@ -15,7 +15,9 @@
 		<file type="component" id="com_ra_data_retention">com_ra_data_retention.zip</file>
 		<file type="plugin" id="plg_ra_data_retention">plg_dataretention.zip</file>
 	</files>
+<!-- 
     <updateservers>
         <server type="extension" name="RA Data Retention" priority="1">https://raw.githubusercontent.com/ramblerswebs/updates/master/updates/pkg-ra-data-retention.xml</server>
     </updateservers>
+-->
 </extension>

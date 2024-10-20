@@ -289,7 +289,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $order_query->select($db->quoteName('j2store_address_id'));
             $order_query->from($db->quoteName('#__j2store_addresses'));
             $conditions = array(
-                $db->quoteName('email') . ' NOT IN (SELECT ' . $db->quoteName('user_email') . ' FROM ' . $db->quoteName('#__j2store_orders') . ')'
+                $db->quoteName('email') . ' IN (SELECT ' . $db->quoteName('user_email') . ' FROM ' . $db->quoteName('#__j2store_orders') . ')'
             );
             $order_query->where($conditions);
 

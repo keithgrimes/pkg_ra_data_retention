@@ -229,7 +229,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $this->removeJ2StoreOrderChild('#__j2store_orderdiscounts', 'order_id', '#__j2store_orders', 'order_id');
             $this->removeJ2StoreOrderChild('#__j2store_cartitems', 'cart_id', '#__j2store_carts', 'j2store_cart_id');
             // Now clear the address / customer table down
-            $this->removeJ2StoreAddresses('#__j2store_addresses');
+            $this->removeJ2StoreAddresses();
         }
         catch (Error $e)
         {
@@ -272,33 +272,60 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return Status::OK;
     }
 
-    private function removeJ2StoreAddresses($table) : int
+    private function removeJ2StoreAddresses() : int
     {
         $db    = $this->getDatabase();
+        $man_query = $db->getQuery(true);
+        $ven_query = $db->getQuery(true);
+        $order_query = $db->getQuery(true);
+        
         $query = $db->getQuery(true);
         try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                $db->quoteName('j2store_address_id') . ' NOT IN (SELECT ' . 
-                        $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_manufacturers') .
-                        ' UNION SELECT '. 
-                        $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_vendors') . 
-                        ')'
-            );
+            $man_query->select($db->quoteName('address_id'));
+            $man_query->from($db->quoteName('#__j2store_manufacturers'));
+            $ven_query->select($db->quoteName('address_id'));
+            $ven_query->from($db->quoteName('#__j2store_vendors'));
 
-            $query->delete($db->quoteName($table));
-            $query->where($conditions);
-    
+            $order_query->select($db->quoteName('j2store_address_id'));
+            $order_query->from($db->quoteName('#__j2store_addresses'));
+            $conditions = array(
+                $db->quoteName('email') . ' IN (SELECT ' . $db->quoteName('user_email') . ' FROM ' . $db->quoteName('#__j2store_orders') . ')'
+            );
+            $order_query->where($conditions);
+
+            $db->setQuery($man_query);
+            $man_result = $db->loadColumn();
+            
+            $db->setQuery($ven_query);
+            $ven_result = $db->loadColumn();
+
+            $db->setQuery($order_query);
+            $order_result = $db->loadColumn();
+
+            // Merge the arrays 
+            $results = array_merge($man_result, $ven_result, $order_result);
+
+            // Now we have an array of items to keep, we can delete the remainder
+            $query->delete('#__j2store_addresses');
+            $valid_addresses = $query->bindArray($results);
+            $query->where($db->quoteName('j2store_address_id') . ' NOT IN (' . implode(',', $valid_addresses) . ')');
+            
+            // Execute the delete
             $db->setQuery($query);
-    
             $result = $db->execute();
         }
         catch (Error $e)
         {
+            unset($man_query);
+            unset($ven_query);
+            unset($orders_query);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($man_query);
+        unset($ven_query);
+        unset($orders_query);
         unset($query);
         unset($db);    
     

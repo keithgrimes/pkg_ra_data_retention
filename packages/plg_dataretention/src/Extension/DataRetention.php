@@ -243,7 +243,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return Status::OK;
     }
 
-    private function J2StoreOrderChild($parenttable, $parentcol, $childtable, $childcol) : int
+    private function removeJ2StoreOrderChild($parenttable, $parentcol, $childtable, $childcol) : int
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);

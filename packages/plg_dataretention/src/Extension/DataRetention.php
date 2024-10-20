@@ -283,6 +283,9 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                         $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_manufacturers') .
                         ' UNION SELECT '. 
                         $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_vendors') . 
+                        ' UNION SELECT '.
+                        $db->quoteName('address_id') . ' FROM ' . $db->quoteName('#__j2store_addresses WHERE') .
+                            $db->quoteName('email') . ' NOT IN (SELECT ' . $db->quoteName('user_email') . 'FROM' . $db->quoteName('#__j2store_orders') . ')' .
                         ')'
             );
 

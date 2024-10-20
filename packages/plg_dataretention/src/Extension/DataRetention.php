@@ -307,8 +307,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
 
             // Now we have an array of items to keep, we can delete the remainder
             $query->delete('#__j2store_addresses');
-            $valid_addresses = $query->bindArray($result);
-            $query->where($db->quoteName('address_id') . ' IN (' . implode(',', $valid_addresses) . ')');
+            $valid_addresses = $query->bindArray($results);
+            $query->where($db->quoteName('address_id') . ' NOT IN (' . implode(',', $valid_addresses) . ')');
             // Execute the delete
             $result = $db->execute();
         }

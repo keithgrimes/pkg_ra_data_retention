@@ -294,13 +294,16 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $order_query->where($conditions);
 
             $db->setQuery($man_query);
-            $result = $db->loadColumn();
+            $man_result = $db->loadColumn();
             
             $db->setQuery($ven_query);
-            $result = $db->loadColumn();
+            $ven_result = $db->loadColumn();
 
-            $db->setQuery($orders_query);
-            $result = $db->loadColumn();
+            $db->setQuery($order_query);
+            $order_result = $db->loadColumn();
+
+            // Merge the arrays 
+            $results = array_merge($man_result, $ven_result, $order_result);
 
             // Now we have an array of items to keep, we can delete the remainder
             $query->delete('#__j2store_addresses');

@@ -110,6 +110,9 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        ra_data_retentionHelper::startJournal("RETENTION");
+        ra_data_retentionHelper::logJournal("RETENTION", "Applying Data Retention","");
+
         $params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
 
@@ -117,6 +120,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $minphoto = $this->readConfigSetting('minphoto', 1);
         $minorders = $this->readConfigSetting('minorder', 12);
         $minredirects = $this->readConfigSetting('minredirects', 6);
+        ra_data_retentionHelper::logJournal("RETENTION", "Read Config Settings maxretention: " . $maxretention . ", minphoto: " . $minphoto . ", minorders: " . $minorders . ", minredirects: " . $minredirects,"");
         
 		ra_data_retentionHelper::CalculateFullRetentions("ARTICLE", $maxretention, $testmode);
 		ra_data_retentionHelper::CalculateFullRetentions("PHOTO", $maxretention, $testmode);
@@ -139,6 +143,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
 
         // Return and error status if there was one.
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
+        ra_data_retentionHelper::stopJournal("RETENTION");
+
         return $return_status;
     }
 
@@ -174,6 +180,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
+        $select = $db->getQuery(true);
         try {
             // Set the state to Trashed and the modified date to the current date and time.
             $conditions = array(
@@ -181,6 +188,21 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 'DATE_ADD(' . $db->quoteName('modified_date') . ', INTERVAL ' .$keepMonths. ' MONTH) < NOW() '
             );
 
+            // First log which items are going to be unpublished.
+            $select->select($db->quoteName(['id', 'old_url', 'new_url', 'modified_date']));
+            $select->from($db->quoteName($table));
+            $select->where($conditions);
+
+            $db->setQuery($select);
+            $result = $db->loadAssocList();
+			$datetime_now = date("Y-m-d H:i");
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("RETENTION", "Removing redirect from " . $table . " - Item: ". $file['old_url'] . ' , modified: ' . $file['modified_date'], $file['id'] . "/" .$datetime_now . "/" . $file('new_url'));
+            }
+
+            // Now delete the redirects.
             $query->delete($db->quoteName($table));
             $query->where($conditions);
     
@@ -190,10 +212,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
+            unset($select);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($select);
         unset($query);
         unset($db);    
     
@@ -203,12 +227,27 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     private function removeJ2StoreOrders($table, $keepMonths) : int
     {
         $db    = $this->getDatabase();
+        $select = $db->getQuery(true);
         $query = $db->getQuery(true);
         try {
             // Set the state to Trashed and the modified date to the current date and time.
             $conditions = array(
                 'DATE_ADD(' . $db->quoteName('modified_on') . ', INTERVAL ' .$keepMonths. ' MONTH) < NOW() '
             );
+
+            // First log which items are going to be unpublished.
+            $select->select($db->quoteName(['j2store_order_id', 'order_id', 'modified_on']));
+            $select->from($db->quoteName($table));
+            $select->where($conditions);
+
+            $db->setQuery($select);
+            $result = $db->loadAssocList();
+			$datetime_now = date("Y-m-d H:i");
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("RETENTION", "Trashing J2Store Order - Invoice: ". $file['j2store_order_id'] . ' , modified on: ' . $file['modified_on'], $file['j2store_order_id'] . " / OrderID: " . $file('order_id'));
+            }
 
             $query->delete($db->quoteName($table));
             $query->where($conditions);
@@ -233,10 +272,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
+            unset($select);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($select);
         unset($query);
         unset($db);    
     
@@ -336,6 +377,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
+        $select = $db->getQuery(true);
+
         try {
             // Set the state to Trashed and the modified date to the current date and time.
             $fields = array(
@@ -351,7 +394,21 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $db->quoteName('rc.months') . ' <> ' . $maxMonths,
                 'DATE_ADD(' . $db->quoteName('a.publish_up') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
-            
+
+            // First log which items are going to be unpublished.
+            $select->select($db->quoteName(['a.id', 'a.title']));
+            $select->from($db->quoteName($table, 'a'));
+            $select->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
+            $select->where($conditions);
+
+            $db->setQuery($select);
+            $result = $db->loadAssocList();
+			$datetime_now = date("Y-m-d H:i");
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("RETENTION", "Trashing item from " . $table . " as per policy - Item: ". $file['title'], $file['id'] . "/" .$datetime_now);
+            }
 
             $query->update($db->quoteName($table, 'a'));
             $query->set($fields);
@@ -364,10 +421,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
+            unset($select);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($select);
         unset($query);
         unset($db);    
     
@@ -378,6 +437,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
+        $select = $db->getQuery(true);
         try {
             // Set the state to Trashed and the modified date to the current date and time.
             $fields = array(
@@ -390,6 +450,21 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $db->quoteName('a.publish_down') . ' <= NOW()',
             );
 
+            // First log which items are going to be unpublished.
+            $select->select($db->quoteName(['a.id', 'a.title', 'a.modified', 'a.publish_down']));
+            $select->from($db->quoteName($table, 'a'));
+            $select->where($conditions);
+
+            $db->setQuery($select);
+            $result = $db->loadAssocList();
+			$datetime_now = date("Y-m-d H:i");
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("RETENTION", "Trashing expired item from " . $table . " - Item: ". $file['title'] . ' , publish down: ' . $file['publish_down'], $file['id'] . "/" .$datetime_now);
+            }
+
+            // Now update them
             $query->update($db->quoteName($table, 'a'));
             $query->set($fields);
             $query->where($conditions);
@@ -400,10 +475,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
+            unset($select);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($select);
         unset($query);
         unset($db);    
     
@@ -414,6 +491,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
+        $select = $db->getQuery(true);
         try {
             // Set the state to Trashed and the modified date to the current date and time.
             $fields = array(
@@ -428,7 +506,23 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $db->quoteName('rc.months') . ' <> ' . $maxMonths,
                 'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
-            
+            // First log which items are going to be unpublished.
+            $select->select($db->quoteName(['a.id', 'a.folder', 'a.date']));
+            $select->from($db->quoteName($table, 'a'));
+            $select->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
+            $select->where($conditions);
+
+            $db->setQuery($select);
+            $result = $db->loadAssocList();
+			$datetime_now = date("Y-m-d H:i");
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                $folder = $file['folder'];
+                $id = $file['id'];
+                $date = $file['date'];
+                ra_data_retentionHelper::logJournal("RETENTION", "EventGallery (" . $table . ") - Unpublishing Folder: ". $folder , $id . "/" . $date );
+            }
 
             $query->update($db->quoteName($table, 'a'));
             $query->set($fields);
@@ -441,10 +535,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
+            unset($select);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($select);
         unset($query);
         unset($db);    
     
@@ -481,6 +577,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $eventsToKeep = $this->GetTopEvents($table, $type, $testmode, $category->catid, $minEvents);
                 foreach ($eventsToKeep as $event)
                 {
+                    ra_data_retentionHelper::logJournal("RETENTION", "EventGallery (" . $table . ") - Keeping Folder with ID: ". $event, $event);
+
                     // Need to keep this event, so set it back to published
                     $queryPublish->bind(':idval', $event);
                     $db->setQuery($queryPublish);
@@ -584,9 +682,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        ra_data_retentionHelper::startJournal("EMPTYTRASH");
+
         // Find how long you need to keep the trash for
         $monthsToKeep = $this->readConfigSetting('MINTRASH', 6);
-//        $monthsToKeep = (int) $event->getArgument('params')->monthstokeep ?? 6;
+        ra_data_retentionHelper::logJournal("EMPTYTRASH", "Empty Trash Commencing. MonthsToKeep: ". $monthsToKeep, $monthsToKeep);
 
         // Remove from tables based on the length of time you need to keep the trash
         $status_content = $this->EmptyTrashTable('#__content', $monthsToKeep, $event);
@@ -595,6 +695,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
 
         // Return the appropriate status
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
+        
+        ra_data_retentionHelper::stopJournal("EMPTYTRASH");
         return $return_status;
     }
 
@@ -602,11 +704,25 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
+        $selectquery = $db->getQuery(true);
         try {
             // Delete items from the trash where they are greater than 6 months old
             $conditions = 'state = -2' ; 
             $conditions = $conditions . ' AND DATE_ADD(modified, INTERVAL ' . $monthsToKeep . ' MONTH) < NOW()';
     
+            // First log what we are going to remove
+            $selectquery->select($db->quoteName(['id', 'title', 'modified']));
+            $selectquery->from($db->quoteName($table));
+            $selectquery->where($conditions);
+
+            $db->setQuery($selectquery) ;
+            $result = $db->loadAssocList();
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("EMPTYTRASH", $table . " - Entry Removed: ". $file['title'], $file['id'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
+            }
+
             $query->delete($db->quoteName($table));
             $query->where($conditions);
     
@@ -616,10 +732,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
+            unset($selectquery);
             unset($query);
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($selectquery);
         unset($query);
         unset($db);    
     
@@ -631,20 +749,32 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $db    = $this->getDatabase();
         $folderquery = $db->getQuery(true);
         $filequery = $db->getQuery(true);
+        $selectquery = $db->getQuery(true);
+        $folderlistquery = $db->getQuery(true);
+
         try {
             // Delete items from the trash where they are greater than 6 months old
             $folderconditions = array(
                 $db->quoteName('published') . ' = 0', 
                 'DATE_ADD(' . $db->quoteName('modified') .', INTERVAL ' . $monthsToKeep . ' MONTH) < NOW()'
             );
-            $fileconditions = array(
-                $db->quoteName('#__eventgallery_folder.published') . ' = 0', 
-                'DATE_ADD(' . $db->quoteName('#__eventgallery_folder.modified') .', INTERVAL ' . $monthsToKeep . ' MONTH) < CURRENT_DATE()'
-            );
-    
-            $folderquery->delete($db->quoteName('#__eventgallery_folder'));
-            $folderquery->where($folderconditions);
 
+            // First need to log the files being removed from the event
+            $selectquery->select($db->quoteName(['fo.description','fi.folder','fi.file','fi.modified']));
+            $selectquery->from($db->quoteName('#__eventgallery_file', 'fi'));
+            $selectquery->join('INNER', $db->quoteName('#__eventgallery_folder','fo') . ' ON ' . $db->quoteName('fi.folder') . '=' . $db->quoteName('fo.folder'));
+            $selectquery->where(array(
+                $db->quoteName('fo.published') . ' = 0',
+                "DATE_ADD(" . $db->quoteName('fo.modified') .", INTERVAL " . $monthsToKeep . " MONTH) < NOW()"));
+
+            $db->setQuery($selectquery) ;
+            $result = $db->loadAssocList();
+            foreach ($result as $file)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("EMPTYTRASH","EventGallery - File Removed: ". $file['file'] . " From Event :" . $file['folder'], $file['description'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
+            }
+    
             $filequery = "DELETE " . $db->quoteName('#__eventgallery_file') . 
                         " FROM " . $db->quoteName('#__eventgallery_file') . 
                         " INNER JOIN " . $db->quoteName('#__eventgallery_folder') . 
@@ -656,7 +786,21 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $db->setQuery($filequery);    
             $result = $db->execute();
 
+            // Now we need to determine if the folder is being removed
+            $folderlistquery->select($db->quoteName(['folder','description','modified'])) ;
+            $folderlistquery->from($db->quoteName('#__eventgallery_folder'));
+            $folderlistquery->where($folderconditions);
+            $db->setQuery($folderlistquery) ;
+            $result = $db->loadAssocList();
+            foreach ($result as $folder)
+            {
+                // Log the Entry
+                ra_data_retentionHelper::logJournal("EMPTYTRASH","Event Gallery - Event Removed: ". $folder['folder'], $folder['description'] . '/' . $folder['modified'] . '/Months to Keep: ' . $monthsToKeep);
+            }
+
             // Files should now be gone, so remove the folder
+            $folderquery->delete($db->quoteName('#__eventgallery_folder'));
+            $folderquery->where($folderconditions);
             $db->setQuery($folderquery);    
             $result = $db->execute();
         }
@@ -667,6 +811,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             unset($db);    
             return Status::INVALID_EXIT;
         }
+        unset($selectquery);
+        unset($folderlistquery);
         unset($filequery);
         unset($folderquery);
         unset($db);    
@@ -685,6 +831,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         {
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
+
+        ra_data_retentionHelper::startJournal("DELETEFILES");
 
         // First iterate each of the folders to search and obtain details of their contents
         $db    = $this->getDatabase();
@@ -730,7 +878,9 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         unset($query);
         unset($db);    
-    
+
+        ra_data_retentionHelper::stopJournal("DELETEFILES");
+
         return Status::OK;
     }
 
@@ -844,6 +994,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                     {
                         // Create the full path to the file.
                         $fullfilename = Path::clean($folder['fullname'] . '/' . $file);
+                        //Log the file being removed
+                        ra_data_retentionHelper::logJournal("DELETEFILES", $file, $fullfilename);
                         // File has not been found so delete it.
                         File::delete($fullfilename);
                     }

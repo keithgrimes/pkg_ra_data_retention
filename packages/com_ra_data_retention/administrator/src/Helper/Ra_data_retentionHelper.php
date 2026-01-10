@@ -145,7 +145,7 @@ class Ra_data_retentionHelper
 										$db->quoteName('months') . ' = ' . intval($retention->months),
 										$db->quoteName('isCalculated') . ' = ' . intval($retention->isCalculated));
 					
-										$conditions = array('catid = ' . intval($retention->catid), $db->quoteName('type') . ' = "' . $type . '"' ,'testmode = ' . intval($testmode));
+					$conditions = array('catid = ' . intval($retention->catid), $db->quoteName('type') . ' = "' . $type . '"' ,'testmode = ' . intval($testmode));
 					// This is an existing record, so update the value which already exists.
 					$query->update($db->quoteName('#__ra_calc_retention_categories'))
 							->set($fields)
@@ -519,5 +519,131 @@ class Ra_data_retentionHelper
             unset($update_query);
             unset($dbo);
         }
+
+		public static function startJournal($type)
+		{
+            // Get a link to the database
+            $db = Factory::getContainer()->get('DatabaseDriver');
+            // Get a new Query
+            $insert_query = $db->getQuery(true);
+            // Determine the new values
+            $columns = array('type','start');
+			$datetime_now = date("Y-m-d H:i:s");
+            $values = array($db->quote($type), $db->quote($datetime_now));
+
+			$insert_query->insert($db->quoteName('#__ra_retention_journal'))
+                                ->columns($db->quoteName($columns))
+                                ->values(implode(',', $values));
+
+            $db->setQuery($insert_query);
+            $db->execute();
+            
+            // Release the Select Query
+            unset($insert_query);
+            unset($db);
+		}
+		public static function stopJournal($type)
+		{
+			$activeJournalID = ra_data_retentionHelper::getActiveJournal($type);
+			if ($activeJournalID > 0) // Only close if you get a valid acive journal.
+			{
+				try
+				{
+					// Get a link to the database
+					$db = Factory::getContainer()->get('DatabaseDriver');
+
+					// Get a new Query
+					$update_query = $db->getQuery(true);
+					// Determine the new values
+					$datetime_now = date("Y-m-d H:i:s");
+					$fields = array($db->quoteName('finish') . ' = "' . $datetime_now . '"');					
+					$conditions = array($db->quoteName('type') . ' = "' . $type . '"' ,$db->quoteName('id') .  ' = ' . intval($activeJournalID));
+
+					$update_query->update($db->quoteName("#__ra_retention_journal"))
+							->set($fields)
+							->where($conditions);
+
+					$db->setQuery($update_query);
+					$db->execute();
+				}
+				catch (Exception $ex)
+				{
+					$x = 1 ;
+				}
+				finally {
+					// Release the Select Query
+					unset($update_query);
+					unset($db);
+				}				
+			}
+		}
+
+		private static function getActiveJournal($type)
+		{
+			try {
+				$activeJournalID = -1;
+				// Get a link to the database
+				$db = Factory::getContainer()->get('DatabaseDriver');
+
+				// Get a new Query
+				$select_query = $db->getQuery(true);
+				// Determine the new values
+				$conditions = array($db->quoteName('type') . ' = "' . $type . '"');
+
+				$select_query->select("MAX(id)")
+						->from($db->quoteName("#__ra_retention_journal"))
+						->where($conditions);
+
+				$db->setQuery($select_query);
+				$activeJournalID = $db->loadResult();
+			}
+			catch(Exception $ex){
+				$x=1;
+			}
+			finally{
+				// Release the Select Query
+				unset($select_query);
+				unset($db);
+			}
+        	
+        	return($activeJournalID);
+		}
+
+		public static function logJournal($type, $summary, $data)
+		{
+			$activeJournalID = ra_data_retentionHelper::getActiveJournal($type);
+			if ($activeJournalID > 0) // Only close if you get a valid acive journal.
+			{
+				try
+				{
+					// Get a link to the database
+					$db = Factory::getContainer()->get('DatabaseDriver');
+
+					// Get a new Query
+					$insert_query = $db->getQuery(true);
+					// Determine the new values
+					$columns = array('journal','type','time','summary','data');
+					$datetime_now = date("Y-m-d H:i:s");
+
+					$values = array($activeJournalID, $db->quote($type), $db->quote($datetime_now), $db->quote($summary), $db->quote($data));
+
+					$insert_query->insert($db->quoteName('#__ra_retention_journal_entries'))
+										->columns($db->quoteName($columns))
+										->values(implode(',', $values));
+
+					$db->setQuery($insert_query);
+					$db->execute();
+				}
+				catch (Exception $ex)
+				{
+					$x = 1 ;
+				}
+				finally {
+					// Release the Select Query
+					unset($insert_query);
+					unset($db);
+				}				
+			}
+		}
 }
 

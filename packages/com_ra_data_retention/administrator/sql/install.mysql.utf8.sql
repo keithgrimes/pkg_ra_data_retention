@@ -69,6 +69,7 @@ PRIMARY KEY (`id`)
 ,KEY `idx_created_by` (`created_by`)
 ,KEY `idx_modified_by` (`modified_by`)
 ) DEFAULT COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `#__ra_calc_retention_categories`
 (
   id INT NOT NULL AUTO_INCREMENT,

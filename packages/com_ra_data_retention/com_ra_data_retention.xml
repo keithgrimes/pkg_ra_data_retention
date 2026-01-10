@@ -3,42 +3,48 @@
 	<name>com_ra_data_retention</name>
 	<author>Keith Grimes</author>
 	<description>COM_RA_DATA_RETENTION_DESC</description>
-	<creationDate>22 May 2024</creationDate>
+	<creationDate>4 January 2026</creationDate>
 	<copyright>Copyright (C) 2019 by Keith Grimes</copyright>
 	<license>GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html</license>
 	<homepage />
 	<authorEmail>webmaster@wiltsswindonramblers.org.uk</authorEmail>
 	<authorUrl />
-	<version>2.0.0</version>
+	<version>3.0.0</version>
     <namespace path="src">Ramblerswebs\Component\Ra_data_retention</namespace>
+
 	<install> 
 		<sql>
 			<file charset="utf8" driver="mysql">sql/install.mysql.utf8.sql</file>
 		</sql>
 	</install>
+
 	<uninstall> 
 		<sql>
 			<file charset="utf8" driver="mysql">sql/uninstall.mysql.utf8.sql</file>
 		</sql>
 	</uninstall>
+
 	<update> 
 		<schemas>
-			<schemapath type="mysql">sql/updates</schemapath>
+			<schemapath type="mysql">sql/updates/mysql</schemapath>
 		</schemas>
 	</update>
+
     <files folder="site">
         <folder>src</folder>
-        
         <folder>tmpl</folder>
     </files>
+
     <media destination="com_ra_data_retention" folder="media">
         <folder>css</folder>
         <folder>js</folder>
         <filename>joomla.asset.json</filename>
     </media>
+
     <languages folder="site/languages">
 			<language tag="en-GB">en-GB/com_ra_data_retention.ini</language>
     </languages>
+
 	<administration>
 		<menu>COM_RA_DATA_RETENTION</menu>
 		<submenu>

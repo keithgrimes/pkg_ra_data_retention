@@ -2,6 +2,17 @@
 <form>
 	<fields name="params">
 		<fieldset name="task_params">
+			<field
+					name="notificationgroup"
+					type="UserGroupList"
+					label="PLG_RETENTION_APPLY_EMAIL_USERGROUP_LABEL"
+					description="PLG_RETENTION_APPLY_EMAIL_USERGROUP_DESC"
+					layout="joomla.form.field.list-fancy-select"
+					checksuperusergroup="0"
+					default=""
+					multiple="1"
+					>
+			</field>
 <!--
 			<field
 				name="logstokeep"

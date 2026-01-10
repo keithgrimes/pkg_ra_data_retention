@@ -246,7 +246,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $file)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("RETENTION", "Trashing J2Store Order - Invoice: ". $file['j2store_order_id'] . ' , modified on: ' . $file['modified_on'], $file['j2store_order_id'] . " / OrderID: " . $file('order_id'));
+                $invoice = $file["j2store_order_id"];
+                $order_id = $file["order_id"];
+                $modified_on = $file["modified_on"];
+                ra_data_retentionHelper::logJournal("RETENTION", "Trashing J2Store Order - Invoice: ". $invoice . ' , modified on: ' . $modified_on, $invoice . " / OrderID: " . $order_id);
             }
 
             $query->delete($db->quoteName($table));

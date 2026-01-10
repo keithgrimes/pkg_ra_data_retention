@@ -111,7 +111,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
 
         ra_data_retentionHelper::startJournal("RETENTION");
-        ra_data_retentionHelper::logJournal("RETENTION", "Applying Data Retention","");
 
         $params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);

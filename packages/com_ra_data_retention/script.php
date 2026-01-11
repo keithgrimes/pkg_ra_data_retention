@@ -31,12 +31,11 @@ return new class () implements ServiceProviderInterface {
 
         public function install(InstallerAdapter $parent): bool
         {
-          MailTemplate::deleteTemplate('com_ra_data_retention.logemailtemplate');
           $result = MailTemplate::createTemplate(
                         'com_ra_data_retention.logemailtemplate', 
                         'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
                         'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
-                        array('name', 'p1', 'p2')
+                        array('logdate', 'logtype', 'logdetail')
                     );
 
           return $result;  
@@ -46,27 +45,18 @@ return new class () implements ServiceProviderInterface {
         {
           // you can use this logic to update any existing template
           if ($mailTemplate = MailTemplate::getTemplate('com_ra_data_retention.logemailtemplate', '')) {
-              MailTemplate::deleteTemplate('com_ra_data_retention.logemailtemplate');
-              $result = MailTemplate::createTemplate(
+              $result = MailTemplate::updateTemplate(
                             'com_ra_data_retention.logemailtemplate', 
                             'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
                             'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
-                            array('name', 'p1', 'p2')
-                        );
-    /*          $result = MailTemplate::updateTemplate(
-                            'com_ra_data_retention.logemailtemplate', 
-                            'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
-                            'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
-                            array('name', 'p1', 'p2')
+                        array('logdate', 'logtype', 'logdetail')
                        );
-    */
-
           } else {
               $result = MailTemplate::createTemplate(
                             'com_ra_data_retention.logemailtemplate', 
                             'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
                             'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
-                            array('name', 'p1', 'p2')
+                        array('logdate', 'logtype', 'logdetail')
                         );
           }
           return $result;  

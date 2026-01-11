@@ -32,9 +32,9 @@ return new class () implements ServiceProviderInterface {
         public function install(InstallerAdapter $parent): bool
         {
           $result = MailTemplate::createTemplate(
-                        'com_ra_data_retention.logemailtemplate', 
-                        'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
-                        'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
+                        'com_ra_data_retention.logemail', 
+                        'COM_RA_DATA_RETENTION_LOGEMAIL_SUBJECT', 
+                        'COM_RA_DATA_RETENTION_LOGEMAIL_BODY',
                         array('logdate', 'logtype', 'logdetail')
                     );
 
@@ -44,18 +44,18 @@ return new class () implements ServiceProviderInterface {
         public function update(InstallerAdapter $parent): bool
         {
           // you can use this logic to update any existing template
-          if ($mailTemplate = MailTemplate::getTemplate('com_ra_data_retention.logemailtemplate', '')) {
+          if ($mailTemplate = MailTemplate::getTemplate('com_ra_data_retention.logemail', '')) {
               $result = MailTemplate::updateTemplate(
-                            'com_ra_data_retention.logemailtemplate', 
-                            'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
-                            'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
+                            'com_ra_data_retention.logemail', 
+                            'COM_RA_DATA_RETENTION_LOGEMAIL_SUBJECT', 
+                            'COM_RA_DATA_RETENTION_LOGEMAIL_BODY',
                         array('logdate', 'logtype', 'logdetail')
                        );
           } else {
               $result = MailTemplate::createTemplate(
-                            'com_ra_data_retention.logemailtemplate', 
-                            'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
-                            'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
+                            'com_ra_data_retention.logemail', 
+                            'COM_RA_DATA_RETENTION_LOGEMAIL_SUBJECT', 
+                            'COM_RA_DATA_RETENTION_LOGEMAIL_BODY',
                         array('logdate', 'logtype', 'logdetail')
                         );
           }
@@ -64,7 +64,7 @@ return new class () implements ServiceProviderInterface {
 
         public function uninstall(InstallerAdapter $parent): bool
         {
-          MailTemplate::deleteTemplate('com_ra_data_retention.logemailtemplate');
+          MailTemplate::deleteTemplate('com_ra_data_retention.logemail');
           return true;
         }
 

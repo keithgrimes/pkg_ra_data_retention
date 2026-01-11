@@ -31,6 +31,7 @@ return new class () implements ServiceProviderInterface {
 
         public function install(InstallerAdapter $parent): bool
         {
+          MailTemplate::deleteTemplate('com_ra_data_retention.LogEmailTemplate');
           $result = MailTemplate::createTemplate(
                         'com_ra_data_retention.LogEmailTemplate', 
                         'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
@@ -45,12 +46,20 @@ return new class () implements ServiceProviderInterface {
         {
           // you can use this logic to update any existing template
           if ($mailTemplate = MailTemplate::getTemplate('com_ra_data_retention.LogEmailTemplate', '')) {
-              $result = MailTemplate::updateTemplate(
-                            'com_ra_data_retention.LogEmailTemplatecom_sendmail.example', 
+              MailTemplate::deleteTemplate('com_ra_data_retention.LogEmailTemplate');
+              $result = MailTemplate::createTemplate(
+                            'com_ra_data_retention.LogEmailTemplate', 
                             'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
                             'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
                             array('name', 'p1', 'p2')
                         );
+    /*          $result = MailTemplate::updateTemplate(
+                            'com_ra_data_retention.LogEmailTemplatecom_sendmail.example', 
+                            'COM_RA_DATA_RETENTION_SENDMAIL_SUBJECT', 
+                            'COM_RA_DATA_RETENTION_SENDMAIL_BODY',
+                            array('name', 'p1', 'p2')
+                       );
+    */
 
           } else {
               $result = MailTemplate::createTemplate(

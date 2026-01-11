@@ -74,6 +74,10 @@
 			<language tag="en-GB">en-GB/com_ra_data_retention.sys.ini</language>
 		</languages>
 	</administration>
+
+	<!-- Scriptfile for custom installation, this adds/updates/removes the message template-->
+	<scriptfile>script.php</scriptfile>
+
 	<config>
 		<fields name="params">
 			<fieldset name="component">

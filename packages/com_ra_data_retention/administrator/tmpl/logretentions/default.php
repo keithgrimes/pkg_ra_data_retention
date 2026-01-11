@@ -48,52 +48,60 @@ if (!empty($saveOrder))
 	<div class="row">
 		<div class="col-md-12">
 			<div id="j-main-container" class="j-main-container">
-			<?php echo LayoutHelper::render('joomla.searchtools.default', array('view' => $this)); ?>
+				<!-- First Render the searchtools before we display teh table data -->
+				<?php echo LayoutHelper::render('joomla.searchtools.default', array('view' => $this)); ?>
 
+				<!-- Now display the table of information -->
 				<div class="clearfix"></div>
 				<table class="table table-striped" id="retentionList">
 					<thead>
-					<tr>
-						<th class="w-1 text-center">
-							<input type="checkbox" autocomplete="off" class="form-check-input" name="checkall-toggle" value=""
-								   title="<?php echo Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)"/>
+					<tr><!-- Header row for filtering -->
+						<th class="w-1 text-center"> <!-- Checkbox to 'select all' -->
+							<input type="checkbox" autocomplete="off" class="form-check-input" name="checkall-toggle" value="" title="<?php echo Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)"/>
 						</th>
 						
-					<?php if (isset($this->items[0]->ordering)): ?>
-					<th scope="col" class="w-1 text-center d-none d-md-table-cell">
+						<!-- Not sure what this is next -->
+						<?php if (isset($this->items[0]->ordering)): ?>
+						<th scope="col" class="w-1 text-center d-none d-md-table-cell">
 
-					<?php echo HTMLHelper::_('searchtools.sort', '', 'r.ordering', $listDirn, $listOrder, null, 'asc', 'JGRID_HEADING_ORDERING', 'icon-menu-2'); ?>
+						<?php echo HTMLHelper::_('searchtools.sort', '', 'r.ordering', $listDirn, $listOrder, null, 'asc', 'JGRID_HEADING_ORDERING', 'icon-menu-2'); ?>
 
-					</th>
-					<?php endif; ?>
+						</th>
+						<?php endif; ?>
 
-						
-					<th  scope="col" class="w-1 text-center">
-						<?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'a.state', $listDirn, $listOrder); ?>
-					</th>
-						
+						<!-- Now display the status icon (published, unpublished etc) -->
+						<th  scope="col" class="w-1 text-center">
+							<?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'a.state', $listDirn, $listOrder); ?>
+						</th>
+							
+						<!-- Category Path is next up -->
 						<th class='left'>
 							<?php echo HTMLHelper::_('searchtools.sort',  'COM_RA_DATA_RETENTION_RETENTIONS_CATEGORYPATH', 'a.title', $listDirn, $listOrder); ?>
 						</th>
-						
-					<th scope="col" class="w-3 d-none d-lg-table-cell" >
-						<?php echo HTMLHelper::_('searchtools.sort',  'COM_RA_DATA_RETENTION_RETENTIONS_MONTHS', 'r.months', $listDirn, $listOrder); ?>
-					</th>
-					<th scope="col" class="w-3 d-none d-lg-table-cell" >
+							
+						<!-- The number of Months for retention -->
+						<th scope="col" class="w-3 d-none d-lg-table-cell" >
+							<?php echo HTMLHelper::_('searchtools.sort',  'COM_RA_DATA_RETENTION_RETENTIONS_MONTHS', 'r.months', $listDirn, $listOrder); ?>
+						</th>
 
-						<?php echo HTMLHelper::_('searchtools.sort',  'JGRID_HEADING_ID', 'r.id', $listDirn, $listOrder); ?>
-					</th>
-					
+						<!-- Finally the id of the entry in the table -->
+						<th scope="col" class="w-3 d-none d-lg-table-cell" >
+
+							<?php echo HTMLHelper::_('searchtools.sort',  'JGRID_HEADING_ID', 'r.id', $listDirn, $listOrder); ?>
+						</th>					
 					</tr>
 					</thead>
 					<tfoot>
 					<tr>
+						<!-- Add the footer which displays the number of entries -->
 						<td colspan="<?php echo isset($this->items[0]) ? count(get_object_vars($this->items[0])) : 10; ?>">
 							<?php echo $this->pagination->getListFooter(); ?>
 						</td>
 					</tr>
 					</tfoot>
+					<!-- Now we are on the main body of the table -->
 					<tbody <?php if (!empty($saveOrder)) :?> class="js-draggable" data-url="<?php echo $saveOrderingUrl; ?>" data-direction="<?php echo strtolower($listDirn); ?>" <?php endif; ?>>
+					<!-- Iterate each item to display, and display it according to the header -->
 					<?php foreach ($this->items as $i => $item) :
 						$ordering   = ($listOrder == 'a.ordering');
 						$canCreate  = $user->authorise('core.create', 'com_ra_data_retention');

@@ -48,7 +48,7 @@ if (!empty($saveOrder))
 	<div class="row">
 		<div class="col-md-12">
 			<div id="j-main-container" class="j-main-container">
-				<!-- First Render the searchtools before we display teh table data -->
+				<!-- First Render the searchtools before we display the table data -->
 				<?php echo LayoutHelper::render('joomla.searchtools.default', array('view' => $this)); ?>
 
 				<!-- Now display the table of information -->
@@ -56,38 +56,21 @@ if (!empty($saveOrder))
 				<table class="table table-striped" id="retentionList">
 					<thead>
 					<tr><!-- Header row for filtering -->
-						<th class="w-1 text-center"> <!-- Checkbox to 'select all' -->
-							<input type="checkbox" autocomplete="off" class="form-check-input" name="checkall-toggle" value="" title="<?php echo Text::_('JGLOBAL_CHECK_ALL'); ?>" onclick="Joomla.checkAll(this)"/>
-						</th>
-						
-						<!-- Not sure what this is next -->
-						<?php if (isset($this->items[0]->ordering)): ?>
-						<th scope="col" class="w-1 text-center d-none d-md-table-cell">
-
-						<?php echo HTMLHelper::_('searchtools.sort', '', 'r.ordering', $listDirn, $listOrder, null, 'asc', 'JGRID_HEADING_ORDERING', 'icon-menu-2'); ?>
-
-						</th>
-						<?php endif; ?>
-
-						<!-- Now display the status icon (published, unpublished etc) -->
+						<!-- Now display the time  -->
 						<th  scope="col" class="w-1 text-center">
-							<?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'a.state', $listDirn, $listOrder); ?>
+							<?php echo HTMLHelper::_('searchtools.sort', 'COM_RA_DATA_RETENTION_HEADING_LOGTIME', 'time', $listDirn, $listOrder); ?>
 						</th>
 							
 						<!-- Category Path is next up -->
 						<th class='left'>
-							<?php echo HTMLHelper::_('searchtools.sort',  'COM_RA_DATA_RETENTION_RETENTIONS_CATEGORYPATH', 'a.title', $listDirn, $listOrder); ?>
+							<?php echo HTMLHelper::_('searchtools.sort',  'COM_RA_DATA_RETENTION_HEADING_LOGSUMMARY', 'summary', $listDirn, $listOrder); ?>
 						</th>
 							
-						<!-- The number of Months for retention -->
-						<th scope="col" class="w-3 d-none d-lg-table-cell" >
-							<?php echo HTMLHelper::_('searchtools.sort',  'COM_RA_DATA_RETENTION_RETENTIONS_MONTHS', 'r.months', $listDirn, $listOrder); ?>
-						</th>
 
 						<!-- Finally the id of the entry in the table -->
 						<th scope="col" class="w-3 d-none d-lg-table-cell" >
 
-							<?php echo HTMLHelper::_('searchtools.sort',  'JGRID_HEADING_ID', 'r.id', $listDirn, $listOrder); ?>
+							<?php echo HTMLHelper::_('searchtools.sort',  'JGRID_HEADING_ID', 'id', $listDirn, $listOrder); ?>
 						</th>					
 					</tr>
 					</thead>
@@ -111,64 +94,16 @@ if (!empty($saveOrder))
 						?>
 						<tr class="row<?php echo $i % 2; ?>" data-draggable-group='1' data-transition>
 							<td class="text-center">
-								<?php echo HTMLHelper::_('grid.id', $i, $item->id); ?>
-							</td>
-							
-							<?php if (isset($this->items[0]->ordering)) : ?>
-
-							<td class="text-center d-none d-md-table-cell">
-
-							<?php
-
-							$iconClass = '';
-
-							if (!$canChange)
-
-							{
-								$iconClass = ' inactive';
-
-							}
-							elseif (!$saveOrder)
-
-							{
-								$iconClass = ' inactive" title="' . Text::_('JORDERINGDISABLED');
-
-							}							?>							<span class="sortable-handler<?php echo $iconClass ?>">
-							<span class="icon-ellipsis-v" aria-hidden="true"></span>
-							</span>
-							<?php if ($canChange && $saveOrder) : ?>
-							<input type="text" name="order[]" size="5" value="<?php echo $item->ordering; ?>" class="width-20 text-area-order hidden">
-								<?php endif; ?>
-							</td>
-							<?php endif; ?>
-
-							
-							<td class="text-center">
-								<?php echo HTMLHelper::_('jgrid.published', $item->state, $i, 'logretentions.', $canChange, 'cb'); ?>
+								<?php echo $this->escape(substr($item->time, -8)); ?>
 							</td>
 							
 							<td>
-								<?php if (isset($item->checked_out) && $item->checked_out && ($canEdit || $canChange)) : ?>
-									<?php echo HTMLHelper::_('jgrid.checkedout', $i, $item->uEditor, $item->checked_out_time, 'logretentions.', $canCheckin); ?>
-								<?php endif; ?>
-								<?php if ($canEdit) : ?>
-									<a href="<?php echo Route::_('index.php?option=com_ra_data_retention&task=logretention.edit&id='.(int) $item->id); ?>">
-									<?php echo $this->escape($item->category_path); ?>
-									</a>
-								<?php else : ?>
-												<?php echo $this->escape($item->category_path); ?>
-								<?php endif; ?>
-							</td>
-							<td align="center">
-								<?php echo $item->months; ?>
+								<?php echo $this->escape($item->summary); ?>
 							</td>
 							
 							<td class="d-none d-lg-table-cell">
-							<?php echo $item->id; ?>
-
+								<?php echo $item->id; ?>
 							</td>
-
-
 						</tr>
 					<?php endforeach; ?>
 					</tbody>

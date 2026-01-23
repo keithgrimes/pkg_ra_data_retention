@@ -41,13 +41,9 @@ class LogretentionsModel extends ListModel
 		if (empty($config['filter_fields']))
 		{
 			$config['filter_fields'] = array(
-				'id', 'r.id',
-				'state', 'r.state',
-				'months', 'r.months',
-				'ordering', 'r.ordering',
-				'created_by', 'r.created_by',
-				'modified_by', 'r.modified_by',
-				'category', 'r.catid',
+				'id', 'id',
+				'time', 'time',
+				'summary', 'summary'
 			);
 		}
 
@@ -126,56 +122,23 @@ class LogretentionsModel extends ListModel
 
 		if (JDEBUG) { JLog::add("[models][logretentions] call to getListQuery", JLog::DEBUG, "com_ra_data_retention"); }
 	
-		$query->select($this->getState('list.select','DISTINCT r.*'))
-			->from($db->quoteName('#__ra_retention_categories', 'r'));
+		// Get the ID for the log which needs to be displayed.
+		$logID = $this->getState('filter.logrun', '0'); 
 
-		// Join over the categories.
-		$query->select($db->quoteName('c.path', 'category_path'))
-			->join('LEFT', $db->quoteName('#__categories', 'c') . ' ON c.id = r.catid');
-				
 		$orderCol  = $this->state->get('list.ordering', 'id');
 		$listDirn = $this->getState('list.direction', 'ASC');
 	
-		$query->order($db->escape($orderCol).' '.$db->escape($listDirn));
-		
-		// Filter by published state
-		$published = $this->getState('filter.state');
-
-		if (is_numeric($published))
-		{
-			$query->where('r.state = ' . (int) $published);
-		}
-		elseif (empty($published))
-		{
-			$query->where('(r.state IN (0, 1))');
-		}
-		// Determine whether we are running in test mode or not.
-		$params = ComponentHelper::getParams('com_ra_data_retention');
-		$testmode = $params->get('testmode', 0);
-		$query->where('testmode = ' . $testmode);
-		$query->where('type = "ARTICLE"');
-		
-
-		// Filter by search in title
-		$search = $this->getState('filter.search');
-
-		if (!empty($search))
-		{
-			if (stripos($search, 'id:') === 0)
-			{
-				$query->where('r.id = ' . (int) substr($search, 3));
-			}
-			else
-			{
-				$search = $db->Quote('%' . $db->escape($search, true) . '%');
-				$query->where('c.path LIKE ' . $search);
-			}
-		}
+		$query->select($db->quoteName(['id', 'time', 'type', 'summary', 'data']))
+			->from($db->quoteName('#__ra_retention_journal_entries'))
+			->where($db->quoteName('journal') . ' = :logref');
 
 		if ($orderCol && $orderDirn)
 		{
 			$query->order($db->escape($orderCol . ' ' . $orderDirn));
 		}
+
+		$query->bind(':logref', $logID);
+
 		return $query;
 	}
 

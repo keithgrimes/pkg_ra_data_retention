@@ -997,7 +997,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                         // Create the full path to the file.
                         $fullfilename = Path::clean($folder['fullname'] . '/' . $file);
                         //Log the file being removed
-                        ra_data_retentionHelper::logJournal("DELETEFILES", $file, $fullfilename);
+                        ra_data_retentionHelper::logJournal("DELETEFILES", $fullfilename, "");
                         // File has not been found so delete it.
                         File::delete($fullfilename);
                     }

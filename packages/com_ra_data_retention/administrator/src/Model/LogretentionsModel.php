@@ -124,21 +124,35 @@ class LogretentionsModel extends ListModel
 	
 		// Get the ID for the log which needs to be displayed.
 		$logID = $this->getState('filter.logrun', '0'); 
+		// Get the search filter clause if one has been provided.
+		$search = $this->getState('filter.search');
 
+		// If the search filter has been provided, then ensure it has % at both ends for a wildcard match.
+		if (!empty($search)) $search = $db->Quote('%' . $db->escape($search, true) . '%');
+
+		// Now get the column to oder the information on, defaulted to id.
 		$orderCol  = $this->state->get('list.ordering', 'id');
+		// Now get the direction to order on, default to ASC
 		$listDirn = $this->getState('list.direction', 'ASC');
 	
+		// Define the basic query to search for records
 		$query->select($db->quoteName(['id', 'time', 'type', 'summary', 'data']))
 			->from($db->quoteName('#__ra_retention_journal_entries'))
 			->where($db->quoteName('journal') . ' = :logref');
+
+		// Add the search filter clause, if one has been provided.
+		if (!empty($search)) $query->where('summary LIKE :searchclause ');
 
 		if ($orderCol && $orderDirn)
 		{
 			$query->order($db->escape($orderCol . ' ' . $orderDirn));
 		}
 
+		// Bind the parameters which are required for the query to execute.
 		$query->bind(':logref', $logID);
+		$query->bind(':searchclause', $search);
 
+		// Return the query back, ready for execution.
 		return $query;
 	}
 
@@ -151,7 +165,6 @@ class LogretentionsModel extends ListModel
 	{
 		$items = parent::getItems();
 		
-
 		return $items;
 	}
 }

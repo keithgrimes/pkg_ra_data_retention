@@ -128,7 +128,7 @@ class LogretentionsModel extends ListModel
 		$search = $this->getState('filter.search');
 
 		// If the search filter has been provided, then ensure it has % at both ends for a wildcard match.
-		if (!empty($search)) $search = $db->Quote('%' . $db->escape($search, true) . '%');
+		if (!empty($search)) $search = '%' . $search . '%';
 
 		// Now get the column to oder the information on, defaulted to id.
 		$orderCol  = $this->state->get('list.ordering', 'id');

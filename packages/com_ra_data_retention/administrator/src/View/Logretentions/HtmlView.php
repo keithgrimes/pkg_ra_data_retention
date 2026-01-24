@@ -26,11 +26,9 @@ use \Joomla\CMS\HTML\Helpers\Sidebar;
  */
 class HtmlView extends BaseHtmlView
 {
-	protected $items;
-
-	protected $pagination;
-
 	protected $state;
+	protected $items;
+	protected $pagination;
 
 	/**
 	 * Display the view
@@ -55,9 +53,11 @@ class HtmlView extends BaseHtmlView
 			throw new \Exception(implode("\n", $errors));
 		}
 
+		// Add the toolbars for the page
 		$this->addToolbar();
-
+		// render the sidebar
 		$this->sidebar = Sidebar::render();
+		// Display based on the template
 		parent::display($tpl);
 	}
 
@@ -73,80 +73,13 @@ class HtmlView extends BaseHtmlView
 		$state = $this->get('State');
 		$canDo = Ra_data_retentionHelper::getActions();
 
+		// Set the title at the top of the page
 		ToolbarHelper::title(Text::_('COM_RA_DATA_RETENTION_TITLE_LOGRETENTIONS'), "generic");
 
+		// Get a link to the toolbar
 		$toolbar = Toolbar::getInstance('toolbar');
 
-		// Check if the form exists before showing the add/edit buttons
-		$formPath = JPATH_COMPONENT_ADMINISTRATOR . '/src/View/Logretention';
-
-		if (file_exists($formPath))
-		{
-			if ($canDo->get('core.create'))
-			{
-				$toolbar->addNew('logretention.add');
-			}
-		}
-
-		if ($canDo->get('core.edit.state'))
-		{
-			$dropdown = $toolbar->dropdownButton('status-group')
-				->text('JTOOLBAR_CHANGE_STATUS')
-				->toggleSplit(false)
-				->icon('fas fa-ellipsis-h')
-				->buttonClass('btn btn-action')
-				->listCheck(true);
-
-			$childBar = $dropdown->getChildToolbar();
-
-			if (isset($this->items[0]->state))
-			{
-				$childBar->publish('logretentions.publish')->listCheck(true);
-				$childBar->unpublish('logretentions.unpublish')->listCheck(true);
-				$childBar->archive('logretentions.archive')->listCheck(true);
-			}
-			elseif (isset($this->items[0]))
-			{
-				// If this component does not use state then show a direct delete button as we can not trash
-				$toolbar->delete('logretentions.delete')
-				->text('JTOOLBAR_EMPTY_TRASH')
-				->message('JGLOBAL_CONFIRM_DELETE')
-				->listCheck(true);
-			}
-/*
-			$childBar->standardButton('duplicate')
-				->text('JTOOLBAR_DUPLICATE')
-				->icon('fas fa-copy')
-				->task('logretentions.duplicate')
-				->listCheck(true);
-*/
-
-			if (isset($this->items[0]->checked_out))
-			{
-				$childBar->checkin('logretentions.checkin')->listCheck(true);
-			}
-
-			if (isset($this->items[0]->state))
-			{
-				$childBar->trash('logretentions.trash')->listCheck(true);
-			}
-		}
-
-		
-
-		// Show trash and delete for components that uses the state field
-		if (isset($this->items[0]->state))
-		{
-
-			if ($this->state->get('filter.state') == ContentComponent::CONDITION_TRASHED && $canDo->get('core.delete'))
-			{
-				$toolbar->delete('logretentions.delete')
-					->text('JTOOLBAR_EMPTY_TRASH')
-					->message('JGLOBAL_CONFIRM_DELETE')
-					->listCheck(true);
-			}
-		}
-
+		// Display the options button if the user is an administrator.
 		if ($canDo->get('core.admin'))
 		{
 			$toolbar->preferences('com_ra_data_retention');
@@ -157,21 +90,6 @@ class HtmlView extends BaseHtmlView
 	}
 	
 	/**
-	 * Method to order fields 
-	 *
-	 * @return void 
-	 */
-	protected function getSortFields()
-	{
-		return array(
-			'r.`id`' => Text::_('JGRID_HEADING_ID'),
-			'r.`state`' => Text::_('JSTATUS'),
-			'r.`ordering`' => Text::_('JGRID_HEADING_ORDERING'),
-			'c.`category_path`' => Text::_('COM_RA_DATA_RETENTION_RETENTIONS_CATEGORYPATH'),
-		);
-	}
-
-	/**
 	 * Check if state is set
 	 *
 	 * @param   mixed  $state  State
@@ -180,6 +98,7 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function getState($state)
 	{
+		// Not sure if this is actually used.
 		return isset($this->state->{$state}) ? $this->state->{$state} : false;
 	}
 }

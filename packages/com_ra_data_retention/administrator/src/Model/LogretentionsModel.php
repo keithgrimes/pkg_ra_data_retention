@@ -133,7 +133,7 @@ class LogretentionsModel extends ListModel
 		// Now get the column to oder the information on, defaulted to id.
 		$orderCol  = $this->state->get('list.ordering', 'id');
 		// Now get the direction to order on, default to ASC
-		$listDirn = $this->getState('list.direction', 'ASC');
+		$orderDirn = $this->getState('list.direction', 'ASC');
 	
 		// Define the basic query to search for records
 		$query->select($db->quoteName(['id', 'time', 'type', 'summary', 'data']))

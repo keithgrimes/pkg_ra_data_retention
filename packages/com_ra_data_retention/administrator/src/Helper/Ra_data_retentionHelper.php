@@ -645,5 +645,40 @@ class Ra_data_retentionHelper
 				}				
 			}
 		}
+
+		public static function truncateJournal($type, $maxlog)
+		{
+            // Get a link to the database
+            $db = Factory::getContainer()->get('DatabaseDriver');
+            // Get a new Query
+            $delete_journal_query = $db->getQuery(true);
+            $delete_entry_query = $db->getQuery(true);
+
+			// Determine the the current date only (No time)
+			$datetime_now = date("Y-m-d H:i:s").format("Y-m-d");
+			$interval = "P" . $maxlog . "M";
+			$basedate = date_sub($datetime_now, $interval);
+
+			$delete_entry_query->delete($db->quoteName('#__ra_retention_journal_entries'))
+                                ->where($db->quoteName("type") . " = :type")
+								->where($db->quoteName("time") . " <= :basedate")
+								->bind(":type", $type)
+								->bind(":basedate", $basedate);
+
+			$delete_journal_query->delete($db->quoteName('#__ra_retention_journal'))
+                                ->where($db->quoteName("type") . " = :type")
+								->where($db->quoteName("start") . " <= :basedate")
+								->bind(":type", $type)
+								->bind(":basedate", $basedate);
+
+            $db->setQuery($delete_entry_query);
+            $db->setQuery($delete_journal_query);
+            $db->execute();
+            
+            // Release the Select Query
+            unset($delete_entry_query);
+			unset($delete_journal_query);
+            unset($db);
+		}
 }
 

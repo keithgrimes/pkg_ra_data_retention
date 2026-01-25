@@ -119,6 +119,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $minphoto = $this->readConfigSetting('minphoto', 1);
         $minorders = $this->readConfigSetting('minorder', 12);
         $minredirects = $this->readConfigSetting('minredirects', 6);
+        $maxlog = $this->readConfigSetting('maxlog', 12);
+
+        // We can first clear down the log, So that you will also have the last log run. 
+		ra_data_retentionHelper::truncateJournal("RETENTION", $maxlog);
+
         ra_data_retentionHelper::logJournal("RETENTION", "Read Config Settings maxretention: " . $maxretention . ", minphoto: " . $minphoto . ", minorders: " . $minorders . ", minredirects: " . $minredirects,"");
         
 		ra_data_retentionHelper::CalculateFullRetentions("ARTICLE", $maxretention, $testmode);
@@ -684,6 +689,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $maxlog = $this->readConfigSetting('maxlog', 12);
+
+        // We can first clear down the log, So that you will also have the last log run. 
+		ra_data_retentionHelper::truncateJournal("EMPTYTRASH", $maxlog);
+
         ra_data_retentionHelper::startJournal("EMPTYTRASH");
 
         // Find how long you need to keep the trash for
@@ -834,6 +844,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $maxlog = $this->readConfigSetting('maxlog', 12);
+
+        // We can first clear down the log, So that you will also have the last log run. 
+		ra_data_retentionHelper::truncateJournal("DELETEFILES", $maxlog);
         ra_data_retentionHelper::startJournal("DELETEFILES");
 
         // First iterate each of the folders to search and obtain details of their contents

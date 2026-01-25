@@ -655,9 +655,12 @@ class Ra_data_retentionHelper
             $delete_entry_query = $db->getQuery(true);
 
 			// Determine the the current date only (No time)
-			$datetime_now = date("Y-m-d H:i:s").format("Y-m-d");
+			//$datetime_now = date("Y-m-d H:i:s").format("Y-m-d");
+			$datetime_now = new \DateTime("now", new \DateTimeZone("Europe/London"));
 			$interval = "P" . $maxlog . "M";
-			$basedate = date_sub($datetime_now, $interval);
+			$basedatetime = $datetime_now->sub(new \DateInterval($interval));
+			$basedate = $basedatetime->format("Y-m-d");
+
 
 			$delete_entry_query->delete($db->quoteName('#__ra_retention_journal_entries'))
                                 ->where($db->quoteName("type") . " = :type")
@@ -672,7 +675,9 @@ class Ra_data_retentionHelper
 								->bind(":basedate", $basedate);
 
             $db->setQuery($delete_entry_query);
-            $db->setQuery($delete_journal_query);
+            $db->execute();
+
+			$db->setQuery($delete_journal_query);
             $db->execute();
             
             // Release the Select Query

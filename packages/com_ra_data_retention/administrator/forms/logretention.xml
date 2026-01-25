@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Ramblerswebs\Component\Ra_data_retention\Administrator\Field">
+  <fieldset>
+    <field name="id" type="text" readonly="true" class="readonly" default="0" label="JGLOBAL_FIELD_ID_LABEL" description="JGLOBAL_FIELD_ID_DESC"/>
+    <field name="type" type="text" readonly="true" class="readonly" label="COM_RA_DATA_RETENTION_FIELD_LOGTYPE_LABEL" description="COM_RA_DATA_RETENTION_FIELD_LOGTYPE_DESC" hint="COM_RA_DATA_RETENTION_FIELD_LOGTYPE_HINT"/>
+    <field name="time" type="text" readonly="true" class="readonly" label="COM_RA_DATA_RETENTION_FIELD_LOGTIME_LABEL" description="COM_RA_DATA_RETENTION_FIELD_LOGTIME_DESC" hint="COM_RA_DATA_RETENTION_FIELD_LOGTIME_HINT"/>
+    <field name="summary" type="text" readonly="true" class="readonly" label="COM_RA_DATA_RETENTION_FIELD_LOGSUMMARY_LABEL" description="COM_RA_DATA_RETENTION_FIELD_LOGSUMMARY_DESC" hint="COM_RA_DATA_RETENTION_FIELD_LOGSUMMARY_HINT"/>
+    <field name="data" type="textarea" readonly="true" class="readonly" label="COM_RA_DATA_RETENTION_FIELD_LOGDATA_LABEL" description="COM_RA_DATA_RETENTION_FIELD_LOGDATA_DESC" hint="COM_RA_DATA_RETENTION_FIELD_LOGDATA_HINT"/>
+  </fieldset>
+</form>

@@ -98,7 +98,9 @@ if (!empty($saveOrder))
 							</td>
 							
 							<td>
+								<a href="<?php echo Route::_('index.php?option=com_ra_data_retention&task=logretention.edit&id='.(int) $item->id); ?>">
 								<?php echo $this->escape($item->summary); ?>
+								</a>
 							</td>
 							
 							<td class="d-none d-lg-table-cell">

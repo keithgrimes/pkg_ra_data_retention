@@ -53,9 +53,7 @@ class LogretentionTable extends Table implements VersionableTableInterface, Tagg
 	public function __construct(DatabaseDriver $db)
 	{
 		$this->typeAlias = 'com_ra_data_retention.logretention';
-		parent::__construct('#__ra_retention_categories', 'id', $db);
-		$this->setColumnAlias('published', 'state');
-		
+		parent::__construct('#__ra_retention_journal_entries', 'id', $db);		
 	}
 
 	/**
@@ -91,20 +89,6 @@ class LogretentionTable extends Table implements VersionableTableInterface, Tagg
 		$input = Factory::getApplication()->input;
 		$task = $input->getString('task', '');
 
-		if ($array['id'] == 0 && empty($array['created_by']))
-		{
-			$array['created_by'] = Factory::getUser()->id;
-		}
-
-		if ($array['id'] == 0 && empty($array['modified_by']))
-		{
-			$array['modified_by'] = Factory::getUser()->id;
-		}
-
-		if ($task == 'apply' || $task == 'save')
-		{
-			$array['modified_by'] = Factory::getUser()->id;
-		}
 
 		if (isset($array['params']) && is_array($array['params']))
 		{
@@ -118,26 +102,6 @@ class LogretentionTable extends Table implements VersionableTableInterface, Tagg
 			$registry = new Registry;
 			$registry->loadArray($array['metadata']);
 			$array['metadata'] = (string) $registry;
-		}
-
-		if (!$user->authorise('core.admin', 'com_ra_data_retention.retention.' . $array['id']))
-		{
-			$actions         = Access::getActionsFromFile(
-				JPATH_ADMINISTRATOR . '/components/com_ra_data_retention/access.xml',
-				"/access/section[@name='retention']/"
-			);
-			$default_actions = Access::getAssetRules('com_ra_data_retention.retention.' . $array['id'])->getData();
-			$array_jaccess   = array();
-
-			foreach ($actions as $action)
-			{
-				if (key_exists($action->name, $default_actions))
-				{
-					$array_jaccess[$action->name] = $default_actions[$action->name];
-				}
-			}
-
-			$array['rules'] = $this->JAccessRulestoArray($array_jaccess);
 		}
 
 		// Bind the rules for ACL where supported.
@@ -257,22 +221,4 @@ class LogretentionTable extends Table implements VersionableTableInterface, Tagg
 
 		return $assetParentId;
 	}
-
-	//XXX_CUSTOM_TABLE_FUNCTION
-
-	
-    /**
-     * Delete a record by id
-     *
-     * @param   mixed  $pk  Primary key value to delete. Optional
-     *
-     * @return bool
-     */
-    public function delete($pk = null)
-    {
-        $this->load($pk);
-        $result = parent::delete($pk);
-        
-        return $result;
-    }
 }

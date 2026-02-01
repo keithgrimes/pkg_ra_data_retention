@@ -15,14 +15,17 @@ use \Joomla\CMS\Factory;
 use \Joomla\CMS\Language\Text;
 use \Joomla\CMS\Object\CMSObject;
 use \Joomla\CMS\Component\ComponentHelper;
+use \Joomla\CMS\Mail\MailerFactoryAwareTrait;
+use \Joomla\CMS\Mail\MailerFactoryAwareInterface;
 
 /**
  * Test helper.
  *
  * @since  1.0.0
  */
-class Ra_data_retentionHelper
+class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 {
+	use MailerFactoryAwareTrait;
 	/**
 	 * Gets the files attached to an item
 	 *
@@ -691,12 +694,14 @@ class Ra_data_retentionHelper
 		$db = Factory::getContainer()->get('DatabaseDriver');
 		// Get a new Query
 		$user_query = $db->getQuery(true);
-		$user_query->select('DISTINCT ', $db->quoteName(['u.id', 'u.name', 'u.email', 'u.sendEmail']))
+		$fieldlist = $db->quoteName(['u.id', 'u.name', 'u.email', 'u.sendEmail']);
+		$fieldlist[0] = 'DISTINCT ' . $fieldlist[0];
+		$user_query->select($fieldlist)
 				->from($db->quoteName('#__users', 'u'))
 				->join('INNER', $db->quoteName('#__user_usergroup_map', 'm') . 'ON (' . $db->quoteName("u.id") . '=' . $db->quoteName('m.user_id') . ')');
 
-		$parameterGroups = $query->bindArray($groups);
-		$user_query->where($this->db->quoteName('m.group_id') . ' IN (' . implode(',', $parameterGroups) . ')');
+		$parameterGroups = $user_query->bindArray($groups);
+		$user_query->where($db->quoteName('m.group_id') . ' IN (' . implode(',', $parameterGroups) . ')');
 
 		$db->setQuery($user_query);
 		$db->execute();
@@ -717,7 +722,7 @@ class Ra_data_retentionHelper
 						->from($db->quoteName('#__ra_retention_journal_entries'))
 						->where($db->quoteName('journal') . ' = :journalid')
 						->order($db->quoteName('id') . ' ASC')
-						->bind(':journalid', $activeJournalId);
+						->bind(':journalid', $activeJournalID);
 						
 				$db->setQuery($report_query);
 				$db->execute();
@@ -732,7 +737,7 @@ class Ra_data_retentionHelper
 					$journal_query->select($db->quoteName(['type', 'start', 'finish']))
 							->from($db->quoteName('#__ra_retention_journal'))
 							->where($db->quoteName('id') . ' = :journalid')
-							->bind(':journalid', $activeJournalId);
+							->bind(':journalid', $activeJournalID);
 
 					$db->setQuery($journal_query);
 					$journalInfo = $db->loadRow();
@@ -741,12 +746,23 @@ class Ra_data_retentionHelper
 					// report is contained within $reportInformation
 					// Journal information is contained within $journalInfo
 					// User information is contained within $users
+					$logdate = 'Today';
+					$logdetail = 'Hello World \n This is the log detail';
 
 					// Iterate each member of the groups 
-					foreach ($users as $user)
+					foreach ($users as $recipient)
 					{
-						// Send the email to the person
+						$mController = new MailerController();
+						// Define the parameters
+						$params = array(
+								'recipient' => 'webmaster@wiltsswindonramblers.org.uk',
+								'logtype' => $type,
+								'logdate' => $logdate, 
+								'logdetail' => $logdetail);
 
+						// Send the email out
+						$mController->_sendUsingMailTemplate($params);
+						unset($mController);
 					}					
 				}
 			}
@@ -758,3 +774,30 @@ class Ra_data_retentionHelper
 	}
 }
 
+class MailerController implements MailerFactoryAwareInterface
+{
+    use MailerFactoryAwareTrait;
+
+    public function _sendUsingMailTemplate($validData)
+    {
+        $mailer = $this->getMailerFactory()->createMailer();
+        $user = $this->app->getIdentity();
+        $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', $user->getParam('language', $this->app->get('language')), $mailer);
+        $mailTemplate->addTemplateData(
+            [
+				'logdate' => $validData['logdate'],
+				'logtype'   => $validData['logtype'],
+				'logdetail'   => $validData['logdetail']
+            ]
+        );
+        $mailTemplate->addRecipient($validData['recipient']);
+
+        try {
+            $mailTemplate->send();
+            // data has been used ok, so clear the fields in the form
+            $this->app->enqueueMessage("Mail successfully sent", 'info');
+        } catch (\Exception $e) {
+            $this->app->enqueueMessage("Failed to send mail, " . $e->getMessage(), 'error');
+        }
+    }
+}

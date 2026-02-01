@@ -13,6 +13,17 @@
 					multiple="1"
 					>
 			</field>
+			<field
+				name="minLines"
+				type="integer"
+				label="PLG_TASK_RETENTION_MINLINES_LABEL"
+				first="0"
+				last="20"
+				step="1"
+				default="0"
+				filter="int"
+				validate="number"
+			/>
 		</fieldset>
 	</fields>
 </form>

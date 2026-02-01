@@ -110,6 +110,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $args = $event->getArguments();
+        $params = $args['params'];
+        $notificationgroups = $params->notificationgroup;
+        $minLines = $params->minLines;
+        $sendmail = $params->notifications->success_mail;
+
         ra_data_retentionHelper::startJournal("RETENTION");
 
         $params = ComponentHelper::getParams('com_ra_data_retention');
@@ -148,6 +154,9 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         // Return and error status if there was one.
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
         ra_data_retentionHelper::stopJournal("RETENTION");
+
+        // Email the report out (where appropriate)
+        ra_data_retentionHelper::sendReport("RETENTION", $minLines, $notificationgroups);
 
         return $return_status;
     }

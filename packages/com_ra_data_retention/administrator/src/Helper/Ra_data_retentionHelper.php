@@ -685,5 +685,76 @@ class Ra_data_retentionHelper
 			unset($delete_journal_query);
             unset($db);
 		}
+
+	public static function sendReport($type, $minLines, $groups)
+	{
+		$db = Factory::getContainer()->get('DatabaseDriver');
+		// Get a new Query
+		$user_query = $db->getQuery(true);
+		$user_query->select('DISTINCT ', $db->quoteName(['u.id', 'u.name', 'u.email', 'u.sendEmail']))
+				->from($db->quoteName('#__users', 'u'))
+				->join('INNER', $db->quoteName('#__user_usergroup_map', 'm') . 'ON (' . $db->quoteName("u.id") . '=' . $db->quoteName('m.user_id') . ')');
+
+		$parameterGroups = $query->bindArray($groups);
+		$user_query->where($this->db->quoteName('m.group_id') . ' IN (' . implode(',', $parameterGroups) . ')');
+
+		$db->setQuery($user_query);
+		$db->execute();
+		$num_rows = $db->getNumRows();
+		// Only continue if you have some users to email to.
+		if ($num_rows > 0)
+		{
+			// Get the list of users to send to
+			$users = $db->loadObjectList();
+
+			// Need to send the report for the latest run based on the type. 
+			$activeJournalID = ra_data_retentionHelper::getActiveJournal($type);
+			if ($activeJournalID > 0) // Only close if you get a valid acive journal.
+			{
+				// Get the actual report. 
+				$report_query = $db->getQuery(true);
+				$report_query->select($db->quoteName(['time', 'summary', 'data']))
+						->from($db->quoteName('#__ra_retention_journal_entries'))
+						->where($db->quoteName('journal') . ' = :journalid')
+						->order($db->quoteName('id') . ' ASC')
+						->bind(':journalid', $activeJournalId);
+						
+				$db->setQuery($report_query);
+				$db->execute();
+				$num_rows = $db->getNumRows();
+				if ($num_rows > $minLines) // Check we have more lines than the minimum to send.
+				{
+					// Get the lines for the report
+					$reportInformation = $db->loadObjectList();
+
+					// Now load the basic report information
+					$journal_query = $db->getQuery(true);
+					$journal_query->select($db->quoteName(['type', 'start', 'finish']))
+							->from($db->quoteName('#__ra_retention_journal'))
+							->where($db->quoteName('id') . ' = :journalid')
+							->bind(':journalid', $activeJournalId);
+
+					$db->setQuery($journal_query);
+					$journalInfo = $db->loadRow();
+
+					// Now define all the information ready to send the report
+					// report is contained within $reportInformation
+					// Journal information is contained within $journalInfo
+					// User information is contained within $users
+
+					// Iterate each member of the groups 
+					foreach ($users as $user)
+					{
+						// Send the email to the person
+
+					}					
+				}
+			}
+		}
+		unset($report_query);
+		unset($user_query);
+		unset($journal_query);
+		unset($db);
+	}
 }
 

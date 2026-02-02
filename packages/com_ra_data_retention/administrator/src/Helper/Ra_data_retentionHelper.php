@@ -8,6 +8,7 @@
  */
 
 namespace Ramblerswebs\Component\Ra_data_retention\Administrator\Helper;
+
 // No direct access
 defined('_JEXEC') or die;
 
@@ -17,6 +18,8 @@ use \Joomla\CMS\Object\CMSObject;
 use \Joomla\CMS\Component\ComponentHelper;
 use \Joomla\CMS\Mail\MailerFactoryAwareTrait;
 use \Joomla\CMS\Mail\MailerFactoryAwareInterface;
+use \Joomla\CMS\Mail\MailerFactoryInterface;
+use \Joomla\CMS\Mail\MailTemplate;
 
 /**
  * Test helper.
@@ -780,9 +783,8 @@ class MailerController implements MailerFactoryAwareInterface
 
     public function _sendUsingMailTemplate($validData)
     {
-        $mailer = $this->getMailerFactory()->createMailer();
-        $user = $this->app->getIdentity();
-        $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', $user->getParam('language', $this->app->get('language')), $mailer);
+		$mailer = Factory::getMailer();
+        $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', null, $mailer);
         $mailTemplate->addTemplateData(
             [
 				'logdate' => $validData['logdate'],
@@ -795,7 +797,7 @@ class MailerController implements MailerFactoryAwareInterface
         try {
             $mailTemplate->send();
             // data has been used ok, so clear the fields in the form
-            $this->app->enqueueMessage("Mail successfully sent", 'info');
+            //$this->app->enqueueMessage("Mail successfully sent", 'info');
         } catch (\Exception $e) {
             $this->app->enqueueMessage("Failed to send mail, " . $e->getMessage(), 'error');
         }

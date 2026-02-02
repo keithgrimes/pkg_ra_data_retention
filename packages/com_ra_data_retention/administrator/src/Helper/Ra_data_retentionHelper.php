@@ -784,7 +784,7 @@ class MailerController implements MailerFactoryAwareInterface
     public function _sendUsingMailTemplate($validData)
     {
 		$mailer = Factory::getMailer();
-        $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', null, $mailer);
+        $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', 'en-GB', $mailer);
         $mailTemplate->addTemplateData(
             [
 				'logdate' => $validData['logdate'],

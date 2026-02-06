@@ -752,7 +752,7 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 					$date = substr($journalInfo['start'], 0, 10);
 					$starttime = substr($journalInfo['start'], strlen($journalInfo['start']) - 8, 8);
 					$finishtime = substr($journalInfo['finish'], strlen($journalInfo['finish']) - 8, 8);
-					$logdetail = 'Hello World <br/>This is the log detail';
+					$logdetail = "Hello World\r\nThis is the log detail";
 
 					// Iterate each member of the groups 
 					foreach ($users as $recipient)

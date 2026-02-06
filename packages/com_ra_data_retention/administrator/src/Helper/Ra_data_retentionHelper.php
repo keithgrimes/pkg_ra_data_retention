@@ -762,7 +762,7 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 					$logdetail = "";
 
 					// if HTML then add a table header
-					if ($isHTML) $logdetail = "<TABLE align='left' border='1'><TH><TD>Time</TD><TD>Summary</TD></TH>";						
+					if ($isHTML) $logdetail = "<TABLE align='left'><THEAD><TR><TH>Time</TH><TH>Summary</TH></TR></THEAD><TBODY>";						
 					foreach ($reportInformation as $line)
 					{
 						if ($isHTML)
@@ -775,7 +775,7 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 
 					}
 					// If HTML then close the table off
-					if ($isHTML) $logdetail = $logdetail . "</TABLE>";						
+					if ($isHTML) $logdetail = $logdetail . "</TBODY></TABLE>";						
 
 					// Iterate each member of the groups 
 					foreach ($users as $recipient)

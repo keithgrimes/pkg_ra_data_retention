@@ -114,7 +114,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $params = $args['params'];
         $notificationgroups = $params->notificationgroup;
         $minLines = $params->minLines;
-        $sendmail = $params->notifications->success_mail;
 
         ra_data_retentionHelper::startJournal("RETENTION");
 
@@ -698,6 +697,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $args = $event->getArguments();
+        $params = $args['params'];
+        $notificationgroups = $params->notificationgroup;
+        $minLines = $params->minLines;
+
         $maxlog = $this->readConfigSetting('maxlog', 12);
 
         // We can first clear down the log, So that you will also have the last log run. 
@@ -718,6 +722,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
         
         ra_data_retentionHelper::stopJournal("EMPTYTRASH");
+        
+        // Email the report out (where appropriate)
+        ra_data_retentionHelper::sendReport("EMPTYTRASH", $minLines, $notificationgroups);
+
         return $return_status;
     }
 
@@ -853,6 +861,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $args = $event->getArguments();
+        $params = $args['params'];
+        $notificationgroups = $params->notificationgroup;
+        $minLines = $params->minLines;
+
         $maxlog = $this->readConfigSetting('maxlog', 12);
 
         // We can first clear down the log, So that you will also have the last log run. 
@@ -905,6 +918,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         unset($db);    
 
         ra_data_retentionHelper::stopJournal("DELETEFILES");
+        // Email the report out (where appropriate)
+        ra_data_retentionHelper::sendReport("DELETEFILES", $minLines, $notificationgroups);
 
         return Status::OK;
     }

@@ -768,7 +768,7 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 								'date' => $date, 
 								'starttime' => $starttime,
 								'finishtime' => $finishtime,
-								'id' => $journalid,
+								'id' => $activeJournalID,
 								'type' => $type,
 								'detail' => $logdetail);
 

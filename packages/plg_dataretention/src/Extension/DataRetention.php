@@ -113,7 +113,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $args = $event->getArguments();
         $params = $args['params'];
         $notificationgroups = $params->notificationgroup;
-        $minLines = $params->minLines;
+        $minLines = $params->minLines == null ? 0 : $params->minLines ;
 
         ra_data_retentionHelper::startJournal("RETENTION");
 
@@ -700,7 +700,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $args = $event->getArguments();
         $params = $args['params'];
         $notificationgroups = $params->notificationgroup;
-        $minLines = $params->minLines;
+        $minLines = $params->minLines == null ? 0 : $params->minLines ;
 
         $maxlog = $this->readConfigSetting('maxlog', 12);
 
@@ -864,7 +864,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $args = $event->getArguments();
         $params = $args['params'];
         $notificationgroups = $params->notificationgroup;
-        $minLines = $params->minLines;
+        $minLines = $params->minLines == null ? 0 : $params->minLines ;
 
         $maxlog = $this->readConfigSetting('maxlog', 12);
 

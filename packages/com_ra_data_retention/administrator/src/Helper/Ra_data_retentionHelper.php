@@ -694,6 +694,9 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 
 	public static function sendReport($type, $minLines, $groups)
 	{
+		// Exit if there are no groups to send to
+		if ($groups == null) return;
+
 		$db = Factory::getContainer()->get('DatabaseDriver');
 		$mailparams = ComponentHelper::getParams('com_mails');
 

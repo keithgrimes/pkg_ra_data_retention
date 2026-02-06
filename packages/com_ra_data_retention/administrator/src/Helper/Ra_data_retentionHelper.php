@@ -762,7 +762,7 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 					$logdetail = "";
 
 					// if HTML then add a table header
-					if ($isHTML) $logdetail = "<TABLE align='left'><THEAD><TR><TH>Time</TH><TH>Summary</TH></TR></THEAD><TBODY>";						
+					if ($isHTML) $logdetail = "<TABLE><THEAD><TR><TH>Time</TH><TH>Summary</TH></TR></THEAD><TBODY>";						
 					foreach ($reportInformation as $line)
 					{
 						if ($isHTML)

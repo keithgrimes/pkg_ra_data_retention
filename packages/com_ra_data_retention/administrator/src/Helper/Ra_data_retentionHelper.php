@@ -793,6 +793,9 @@ class MailerController implements MailerFactoryAwareInterface
     public function _sendUsingMailTemplate($validData)
     {
 		$mailer = Factory::getMailer();
+		$app = Factory::getApplication();
+		$app->getConfig();
+		
         $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', 'en-GB', $mailer);
         $mailTemplate->addTemplateData(
             [

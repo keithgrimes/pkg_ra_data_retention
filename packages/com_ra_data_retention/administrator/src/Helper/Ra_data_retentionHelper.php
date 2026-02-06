@@ -698,7 +698,7 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 		$mailparams = ComponentHelper::getParams('com_mails');
 
 		// Determine if we are sending emails using plaintext
-		$isHTML = strcmp($mailparams->get('mail_style', 'plaintext'), 'plaintext') == 0 ? true : false;
+		$isHTML = strcmp($mailparams->get('mail_style', 'plaintext'), 'plaintext') == 0 ? false : true;
 
 		// Get a new Query
 		$user_query = $db->getQuery(true);

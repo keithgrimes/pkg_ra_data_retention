@@ -119,7 +119,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         ra_data_retentionHelper::startJournal("RETENTION");
 
         $params = ComponentHelper::getParams('com_ra_data_retention');
-        $mailparams = ComponentHelper::getParams('com_mails');
 		$testmode = $params->get('testmode', 0);
 
         $maxretention = $this->readConfigSetting('maxretention', 840);

@@ -695,6 +695,11 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 	public static function sendReport($type, $minLines, $groups)
 	{
 		$db = Factory::getContainer()->get('DatabaseDriver');
+		$mailparams = ComponentHelper::getParams('com_mails');
+
+		// Determine if we are sending emails using plaintext
+		$isHTML = strcmp($mailparams->data->mail_style, 'plaintext') == 0 ? true : false;
+
 		// Get a new Query
 		$user_query = $db->getQuery(true);
 		$fieldlist = $db->quoteName(['u.id', 'u.name', 'u.email', 'u.sendEmail']);
@@ -752,7 +757,25 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 					$date = substr($journalInfo['start'], 0, 10);
 					$starttime = substr($journalInfo['start'], strlen($journalInfo['start']) - 8, 8);
 					$finishtime = substr($journalInfo['finish'], strlen($journalInfo['finish']) - 8, 8);
-					$logdetail = "Hello World\r\nThis is the log detail";
+
+					// now lets generate the detail
+					$logdetail = "";
+
+					// if HTML then add a table header
+					if ($isHTML) $logdetail = "<TABLE><TH><TD>Time</TD><TD>Summary</TD></TH>";						
+					foreach ($reportInformation as $line)
+					{
+						if ($isHTML)
+							{
+								$logdetail = $logdetail . "<tr><td>" . $line->time . "</td><td>" . $line->summary . "</td></tr>";
+							}
+							else{
+								$logdetail = $logdetail . $line->time . "\t" . $line->summary . "\r\n";
+							}
+
+					}
+					// If HTML then close the table off
+					if ($isHTML) $logdetail = $logdetail . "</TABLE>";						
 
 					// Iterate each member of the groups 
 					foreach ($users as $recipient)
@@ -795,7 +818,7 @@ class MailerController implements MailerFactoryAwareInterface
 		$mailer = Factory::getMailer();
 		$app = Factory::getApplication();
 		$app->getConfig();
-		
+
         $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', 'en-GB', $mailer);
         $mailTemplate->addTemplateData(
             [

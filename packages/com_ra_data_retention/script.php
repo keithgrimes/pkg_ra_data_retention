@@ -35,7 +35,7 @@ return new class () implements ServiceProviderInterface {
                         'com_ra_data_retention.logemail', 
                         'COM_RA_DATA_RETENTION_LOGEMAIL_SUBJECT', 
                         'COM_RA_DATA_RETENTION_LOGEMAIL_BODY',
-                        array('logdate', 'logtype', 'logdetail')
+                        array('name','date','starttime', 'finishtime', 'id', 'type', 'detail')
                     );
 
           return $result;  
@@ -49,14 +49,14 @@ return new class () implements ServiceProviderInterface {
                             'com_ra_data_retention.logemail', 
                             'COM_RA_DATA_RETENTION_LOGEMAIL_SUBJECT', 
                             'COM_RA_DATA_RETENTION_LOGEMAIL_BODY',
-                        array('logdate', 'logtype', 'logdetail')
+                        array('name','date','starttime', 'finishtime', 'id', 'type', 'detail')
                        );
           } else {
               $result = MailTemplate::createTemplate(
                             'com_ra_data_retention.logemail', 
                             'COM_RA_DATA_RETENTION_LOGEMAIL_SUBJECT', 
                             'COM_RA_DATA_RETENTION_LOGEMAIL_BODY',
-                        array('logdate', 'logtype', 'logdetail')
+                        array('name','date','starttime', 'finishtime', 'id', 'type', 'detail')
                         );
           }
           return $result;  

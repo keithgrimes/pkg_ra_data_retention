@@ -743,25 +743,36 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 							->bind(':journalid', $activeJournalID);
 
 					$db->setQuery($journal_query);
-					$journalInfo = $db->loadRow();
+					$journalInfo = $db->loadAssoc();
 
 					// Now define all the information ready to send the report
 					// report is contained within $reportInformation
 					// Journal information is contained within $journalInfo
 					// User information is contained within $users
-					$logdate = 'Today';
-					$logdetail = 'Hello World \n This is the log detail';
+					$date = substr($journalInfo['start'], 0, 10);
+					$starttime = substr($journalInfo['start'], strlen($journalInfo['start']) - 8, 8);
+					$finishtime = substr($journalInfo['finish'], strlen($journalInfo['finish']) - 8, 8);
+					$logdetail = 'Hello World <br/>This is the log detail';
 
 					// Iterate each member of the groups 
 					foreach ($users as $recipient)
 					{
 						$mController = new MailerController();
+						// Get the name of the person we are sending to and their email address.
+						$name = $recipient->name;
+						$email = $recipient->email;
 						// Define the parameters
 						$params = array(
-								'recipient' => 'webmaster@wiltsswindonramblers.org.uk',
-								'logtype' => $type,
-								'logdate' => $logdate, 
-								'logdetail' => $logdetail);
+								'recipient' => $email,
+								'name' => $name,
+								'date' => $date, 
+								'starttime' => $starttime,
+								'finishtime' => $finishtime,
+								'id' => $journalid,
+								'type' => $type,
+								'detail' => $logdetail);
+
+								//array('name','date','starttime', 'finishtime', 'id', 'type', 'detail')
 
 						// Send the email out
 						$mController->_sendUsingMailTemplate($params);

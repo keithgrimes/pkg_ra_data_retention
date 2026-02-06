@@ -772,8 +772,6 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 								'type' => $type,
 								'detail' => $logdetail);
 
-								//array('name','date','starttime', 'finishtime', 'id', 'type', 'detail')
-
 						// Send the email out
 						$mController->_sendUsingMailTemplate($params);
 						unset($mController);
@@ -798,9 +796,13 @@ class MailerController implements MailerFactoryAwareInterface
         $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', 'en-GB', $mailer);
         $mailTemplate->addTemplateData(
             [
-				'logdate' => $validData['logdate'],
-				'logtype'   => $validData['logtype'],
-				'logdetail'   => $validData['logdetail']
+				'name' => $validData['name'],
+				'date' => $validData['date'],
+				'starttime' => $validData['starttime'],
+				'finishtime' => $validData['finishtime'],
+				'id' => $validData['id'],
+				'type'   => $validData['type'],
+				'detail'   => $validData['detail']
             ]
         );
         $mailTemplate->addRecipient($validData['recipient']);

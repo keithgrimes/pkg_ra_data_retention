@@ -767,10 +767,10 @@ class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 					{
 						if ($isHTML)
 							{
-								$logdetail = $logdetail . "<tr><td>" . $line->time . "</td><td>" . $line->summary . "</td></tr>";
+								$logdetail = $logdetail . "<tr><td>" . substr($line->time, strlen($line->time) - 8, 8) . "</td><td>" . $line->summary . "</td></tr>";
 							}
 							else{
-								$logdetail = $logdetail . $line->time . "\t" . $line->summary . "\r\n";
+								$logdetail = $logdetail . substr($line->time, strlen($line->time) - 8, 8) . "\t" . $line->summary . "\r\n";
 							}
 
 					}

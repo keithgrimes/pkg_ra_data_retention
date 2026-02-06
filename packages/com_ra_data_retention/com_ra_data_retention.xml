@@ -55,6 +55,7 @@
 			<menu view="filepaths">COM_RA_DATA_RETENTION_SUBMENU_FILEPATHS</menu>
 			<menu view="filetables">COM_RA_DATA_RETENTION_SUBMENU_FILETABLES</menu>
 			<menu view="settings">COM_RA_DATA_RETENTION_SUBMENU_SETTINGS</menu>
+			<menu view="logretentions">COM_RA_DATA_RETENTION_SUBMENU_LOG</menu>
 		</submenu>
 		<files folder="administrator">
             <filename>access.xml</filename>
@@ -73,6 +74,10 @@
 			<language tag="en-GB">en-GB/com_ra_data_retention.sys.ini</language>
 		</languages>
 	</administration>
+
+	<!-- Scriptfile for custom installation, this adds/updates/removes the message template-->
+	<scriptfile>script.php</scriptfile>
+
 	<config>
 		<fields name="params">
 			<fieldset name="component">

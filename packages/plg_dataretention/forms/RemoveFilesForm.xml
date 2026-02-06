@@ -2,19 +2,28 @@
 <form>
 	<fields name="params">
 		<fieldset name="task_params">
-<!--
 			<field
-				name="logstokeep"
+					name="notificationgroup"
+					type="UserGroupList"
+					label="PLG_RETENTION_APPLY_EMAIL_USERGROUP_LABEL"
+					description="PLG_RETENTION_APPLY_EMAIL_USERGROUP_DESC"
+					layout="joomla.form.field.list-fancy-select"
+					checksuperusergroup="0"
+					default=""
+					multiple="1"
+					>
+			</field>
+			<field
+				name="minLines"
 				type="integer"
-				label="PLG_TASK_ROTATELOGS_LOGSTOKEEP_LABEL"
-				first="1"
-				last="10"
+				label="PLG_TASK_RETENTION_MINLINES_LABEL"
+				first="0"
+				last="20"
 				step="1"
-				default="1"
+				default="0"
 				filter="int"
 				validate="number"
 			/>
--->
 		</fieldset>
 	</fields>
 </form>

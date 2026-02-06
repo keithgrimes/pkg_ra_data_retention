@@ -145,25 +145,10 @@ if (!empty($saveOrder))
 								<?php endif; ?>
 								<?php if ($canEdit) : ?>
 									<a href="<?php echo Route::_('index.php?option=com_ra_data_retention&task=setting.edit&id='.(int) $item->id); ?>">
-									<?php switch(strtoupper($item->setting))
+											<?php switch(strtoupper($item->setting))
 											{
-												case 'MAXRETENTION':
-													echo $this->escape('Maximum Retention Period (months)');
-													break;
-												case 'MINPHOTO':
-													echo $this->escape('Minimum No of Photographs (Events)');
-													break;
-												case 'MINORDER':
-													echo $this->escape('Minimum Retention period of J2Store orders (Months)');
-													break;
-												case 'MINREDIRECTS':
-													echo $this->escape('Minimum Retention Period of url redirects (Months)');
-													break;
-												case 'MINTRASH':
-													echo $this->escape('Minimum Retention Period to hold items in trash (Months)');
-													break;
 												default:
-													echo $this->escape($item->setting); 
+													echo $this->escape(Text::_('COM_RA_DATA_RETENTION_' . $item->setting . '_DESC')); 
 													break;
 											} 
 											?>

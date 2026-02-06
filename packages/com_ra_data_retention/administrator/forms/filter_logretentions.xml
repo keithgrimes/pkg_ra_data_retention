@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="filter">
+        <field name="search" type="text" description="COM_RA_DATA_RETENTION_SEARCH_FILTER_SUBMIT"
+               label="COM_USERS_FILTER_SEARCH_DESC"
+               class="js-stools-search-string" />
+
+        <field addfieldprefix ="Ramblerswebs\Component\Ra_data_retention\Administrator\Field"
+            name="logrun" 
+            type="LogFile"
+            label="Please select the log run" 
+            description="Log run" 
+            onchange="this.form.submit();">
+
+            <option value="">Select a log</option>
+        </field>
+    </fields>
+
+    <fields name="list">
+       <field name="limit"
+               type="limitbox"
+               label="COM_RA_DATA_RETENTION_LIST_LIMIT"
+               description="COM_RA_DATA_RETENTION_LIST_LIMIT_DESC"
+               class="input-mini"
+               default="25"
+               onchange="this.form.submit();"
+        />
+    </fields>
+
+</form>

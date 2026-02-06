@@ -110,8 +110,12 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $args = $event->getArguments();
+        $params = $args['params'];
+        $notificationgroups = $params->notificationgroup;
+        $minLines = $params->minLines == null ? 0 : $params->minLines ;
+
         ra_data_retentionHelper::startJournal("RETENTION");
-        ra_data_retentionHelper::logJournal("RETENTION", "Applying Data Retention","");
 
         $params = ComponentHelper::getParams('com_ra_data_retention');
 		$testmode = $params->get('testmode', 0);
@@ -120,6 +124,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $minphoto = $this->readConfigSetting('minphoto', 1);
         $minorders = $this->readConfigSetting('minorder', 12);
         $minredirects = $this->readConfigSetting('minredirects', 6);
+        $maxlog = $this->readConfigSetting('maxlog', 12);
+
+        // We can first clear down the log, So that you will also have the last log run. 
+		ra_data_retentionHelper::truncateJournal("RETENTION", $maxlog);
+
         ra_data_retentionHelper::logJournal("RETENTION", "Read Config Settings maxretention: " . $maxretention . ", minphoto: " . $minphoto . ", minorders: " . $minorders . ", minredirects: " . $minredirects,"");
         
 		ra_data_retentionHelper::CalculateFullRetentions("ARTICLE", $maxretention, $testmode);
@@ -144,6 +153,9 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         // Return and error status if there was one.
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
         ra_data_retentionHelper::stopJournal("RETENTION");
+
+        // Email the report out (where appropriate)
+        ra_data_retentionHelper::sendReport("RETENTION", $minLines, $notificationgroups);
 
         return $return_status;
     }
@@ -685,6 +697,16 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $args = $event->getArguments();
+        $params = $args['params'];
+        $notificationgroups = $params->notificationgroup;
+        $minLines = $params->minLines == null ? 0 : $params->minLines ;
+
+        $maxlog = $this->readConfigSetting('maxlog', 12);
+
+        // We can first clear down the log, So that you will also have the last log run. 
+		ra_data_retentionHelper::truncateJournal("EMPTYTRASH", $maxlog);
+
         ra_data_retentionHelper::startJournal("EMPTYTRASH");
 
         // Find how long you need to keep the trash for
@@ -700,6 +722,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
         
         ra_data_retentionHelper::stopJournal("EMPTYTRASH");
+        
+        // Email the report out (where appropriate)
+        ra_data_retentionHelper::sendReport("EMPTYTRASH", $minLines, $notificationgroups);
+
         return $return_status;
     }
 
@@ -835,6 +861,15 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             throw new RuntimeException('The Data Retention component is not installed or has been disabled.');
         }
 
+        $args = $event->getArguments();
+        $params = $args['params'];
+        $notificationgroups = $params->notificationgroup;
+        $minLines = $params->minLines == null ? 0 : $params->minLines ;
+
+        $maxlog = $this->readConfigSetting('maxlog', 12);
+
+        // We can first clear down the log, So that you will also have the last log run. 
+		ra_data_retentionHelper::truncateJournal("DELETEFILES", $maxlog);
         ra_data_retentionHelper::startJournal("DELETEFILES");
 
         // First iterate each of the folders to search and obtain details of their contents
@@ -883,6 +918,8 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         unset($db);    
 
         ra_data_retentionHelper::stopJournal("DELETEFILES");
+        // Email the report out (where appropriate)
+        ra_data_retentionHelper::sendReport("DELETEFILES", $minLines, $notificationgroups);
 
         return Status::OK;
     }
@@ -998,7 +1035,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                         // Create the full path to the file.
                         $fullfilename = Path::clean($folder['fullname'] . '/' . $file);
                         //Log the file being removed
-                        ra_data_retentionHelper::logJournal("DELETEFILES", $file, $fullfilename);
+                        ra_data_retentionHelper::logJournal("DELETEFILES", $fullfilename, "");
                         // File has not been found so delete it.
                         File::delete($fullfilename);
                     }

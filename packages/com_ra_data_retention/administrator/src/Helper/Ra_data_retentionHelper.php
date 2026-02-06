@@ -8,6 +8,7 @@
  */
 
 namespace Ramblerswebs\Component\Ra_data_retention\Administrator\Helper;
+
 // No direct access
 defined('_JEXEC') or die;
 
@@ -15,14 +16,19 @@ use \Joomla\CMS\Factory;
 use \Joomla\CMS\Language\Text;
 use \Joomla\CMS\Object\CMSObject;
 use \Joomla\CMS\Component\ComponentHelper;
+use \Joomla\CMS\Mail\MailerFactoryAwareTrait;
+use \Joomla\CMS\Mail\MailerFactoryAwareInterface;
+use \Joomla\CMS\Mail\MailerFactoryInterface;
+use \Joomla\CMS\Mail\MailTemplate;
 
 /**
  * Test helper.
  *
  * @since  1.0.0
  */
-class Ra_data_retentionHelper
+class Ra_data_retentionHelper implements MailerFactoryAwareInterface
 {
+	use MailerFactoryAwareTrait;
 	/**
 	 * Gets the files attached to an item
 	 *
@@ -645,5 +651,197 @@ class Ra_data_retentionHelper
 				}				
 			}
 		}
+
+		public static function truncateJournal($type, $maxlog)
+		{
+            // Get a link to the database
+            $db = Factory::getContainer()->get('DatabaseDriver');
+            // Get a new Query
+            $delete_journal_query = $db->getQuery(true);
+            $delete_entry_query = $db->getQuery(true);
+
+			// Determine the the current date only (No time)
+			//$datetime_now = date("Y-m-d H:i:s").format("Y-m-d");
+			$datetime_now = new \DateTime("now", new \DateTimeZone("Europe/London"));
+			$interval = "P" . $maxlog . "M";
+			$basedatetime = $datetime_now->sub(new \DateInterval($interval));
+			$basedate = $basedatetime->format("Y-m-d");
+
+
+			$delete_entry_query->delete($db->quoteName('#__ra_retention_journal_entries'))
+                                ->where($db->quoteName("type") . " = :type")
+								->where($db->quoteName("time") . " <= :basedate")
+								->bind(":type", $type)
+								->bind(":basedate", $basedate);
+
+			$delete_journal_query->delete($db->quoteName('#__ra_retention_journal'))
+                                ->where($db->quoteName("type") . " = :type")
+								->where($db->quoteName("start") . " <= :basedate")
+								->bind(":type", $type)
+								->bind(":basedate", $basedate);
+
+            $db->setQuery($delete_entry_query);
+            $db->execute();
+
+			$db->setQuery($delete_journal_query);
+            $db->execute();
+            
+            // Release the Select Query
+            unset($delete_entry_query);
+			unset($delete_journal_query);
+            unset($db);
+		}
+
+	public static function sendReport($type, $minLines, $groups)
+	{
+		// Exit if there are no groups to send to
+		if ($groups == null) return;
+
+		$db = Factory::getContainer()->get('DatabaseDriver');
+		$mailparams = ComponentHelper::getParams('com_mails');
+
+		// Determine if we are sending emails using plaintext
+		$isHTML = strcmp($mailparams->get('mail_style', 'plaintext'), 'plaintext') == 0 ? false : true;
+
+		// Get a new Query
+		$user_query = $db->getQuery(true);
+		$fieldlist = $db->quoteName(['u.id', 'u.name', 'u.email', 'u.sendEmail']);
+		$fieldlist[0] = 'DISTINCT ' . $fieldlist[0];
+		$user_query->select($fieldlist)
+				->from($db->quoteName('#__users', 'u'))
+				->join('INNER', $db->quoteName('#__user_usergroup_map', 'm') . 'ON (' . $db->quoteName("u.id") . '=' . $db->quoteName('m.user_id') . ')');
+
+		$parameterGroups = $user_query->bindArray($groups);
+		$user_query->where($db->quoteName('m.group_id') . ' IN (' . implode(',', $parameterGroups) . ')');
+
+		$db->setQuery($user_query);
+		$db->execute();
+		$num_rows = $db->getNumRows();
+		// Only continue if you have some users to email to.
+		if ($num_rows > 0)
+		{
+			// Get the list of users to send to
+			$users = $db->loadObjectList();
+
+			// Need to send the report for the latest run based on the type. 
+			$activeJournalID = ra_data_retentionHelper::getActiveJournal($type);
+			if ($activeJournalID > 0) // Only close if you get a valid acive journal.
+			{
+				// Get the actual report. 
+				$report_query = $db->getQuery(true);
+				$report_query->select($db->quoteName(['time', 'summary', 'data']))
+						->from($db->quoteName('#__ra_retention_journal_entries'))
+						->where($db->quoteName('journal') . ' = :journalid')
+						->order($db->quoteName('id') . ' ASC')
+						->bind(':journalid', $activeJournalID);
+						
+				$db->setQuery($report_query);
+				$db->execute();
+				$num_rows = $db->getNumRows();
+				if ($num_rows > $minLines) // Check we have more lines than the minimum to send.
+				{
+					// Get the lines for the report
+					$reportInformation = $db->loadObjectList();
+
+					// Now load the basic report information
+					$journal_query = $db->getQuery(true);
+					$journal_query->select($db->quoteName(['type', 'start', 'finish']))
+							->from($db->quoteName('#__ra_retention_journal'))
+							->where($db->quoteName('id') . ' = :journalid')
+							->bind(':journalid', $activeJournalID);
+
+					$db->setQuery($journal_query);
+					$journalInfo = $db->loadAssoc();
+
+					// Now define all the information ready to send the report
+					// report is contained within $reportInformation
+					// Journal information is contained within $journalInfo
+					// User information is contained within $users
+					$date = substr($journalInfo['start'], 0, 10);
+					$starttime = substr($journalInfo['start'], strlen($journalInfo['start']) - 8, 8);
+					$finishtime = substr($journalInfo['finish'], strlen($journalInfo['finish']) - 8, 8);
+
+					// now lets generate the detail
+					$logdetail = "";
+
+					// if HTML then add a table header
+					if ($isHTML) $logdetail = "<TABLE><THEAD><TR><TH>Time</TH><TH>Summary</TH></TR></THEAD><TBODY>";						
+					foreach ($reportInformation as $line)
+					{
+						if ($isHTML)
+							{
+								$logdetail = $logdetail . "<tr><td>" . substr($line->time, strlen($line->time) - 8, 8) . "</td><td>" . $line->summary . "</td></tr>";
+							}
+							else{
+								$logdetail = $logdetail . substr($line->time, strlen($line->time) - 8, 8) . "\t" . $line->summary . "\r\n";
+							}
+
+					}
+					// If HTML then close the table off
+					if ($isHTML) $logdetail = $logdetail . "</TBODY></TABLE>";						
+
+					// Iterate each member of the groups 
+					foreach ($users as $recipient)
+					{
+						$mController = new MailerController();
+						// Get the name of the person we are sending to and their email address.
+						$name = $recipient->name;
+						$email = $recipient->email;
+						// Define the parameters
+						$params = array(
+								'recipient' => $email,
+								'name' => $name,
+								'date' => $date, 
+								'starttime' => $starttime,
+								'finishtime' => $finishtime,
+								'id' => $activeJournalID,
+								'type' => $type,
+								'detail' => $logdetail);
+
+						// Send the email out
+						$mController->_sendUsingMailTemplate($params);
+						unset($mController);
+					}					
+				}
+			}
+		}
+		unset($report_query);
+		unset($user_query);
+		unset($journal_query);
+		unset($db);
+	}
 }
 
+class MailerController implements MailerFactoryAwareInterface
+{
+    use MailerFactoryAwareTrait;
+
+    public function _sendUsingMailTemplate($validData)
+    {
+		$mailer = Factory::getMailer();
+		$app = Factory::getApplication();
+		$app->getConfig();
+
+        $mailTemplate = new MailTemplate('com_ra_data_retention.logemail', 'en-GB', $mailer);
+        $mailTemplate->addTemplateData(
+            [
+				'name' => $validData['name'],
+				'date' => $validData['date'],
+				'starttime' => $validData['starttime'],
+				'finishtime' => $validData['finishtime'],
+				'id' => $validData['id'],
+				'type'   => $validData['type'],
+				'detail'   => $validData['detail']
+            ]
+        );
+        $mailTemplate->addRecipient($validData['recipient']);
+
+        try {
+            $mailTemplate->send();
+            // data has been used ok, so clear the fields in the form
+            //$this->app->enqueueMessage("Mail successfully sent", 'info');
+        } catch (\Exception $e) {
+            $this->app->enqueueMessage("Failed to send mail, " . $e->getMessage(), 'error');
+        }
+    }
+}

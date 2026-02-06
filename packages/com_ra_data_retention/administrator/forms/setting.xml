@@ -19,6 +19,7 @@
       <option value="MINORDER">Minimum Retention Period of J2Store orders (Months)</option>
       <option value="MINREDIRECTS">Minimum Retention Period of url redirects (Months)</option>
       <option value="MINTRASH">Minimum Retention Period to hold items in trash (Months)</option>
+      <option value="MAXLOG">Maximum Retention Period to hold log records (Months)</option>
     </field>
     <field name="value" type="number" default="0" min="0" max="840" step="1" required="true" message="This is required" label="COM_RA_DATA_RETENTION_FIELD_VALUE_LABEL" description="COM_RA_DATA_RETENTION_FIELD_VALUE_DESC" hint="COM_RA_DATA_RETENTION_FIELD_VALUE_HINT" />
     <field name="version_note" type="text" label="JGLOBAL_FIELD_VERSION_NOTE_LABEL" description="JGLOBAL_FIELD_VERSION_NOTE_DESC" class="inputbox" size="45" labelclass="control-label"/>

@@ -16,7 +16,6 @@
     </fields>
 
     <fields name="list">
-
         <field name="fullordering"
                type="list"
                label="COM_RA_DATA_RETENTION_LIST_FULL_ORDERING"

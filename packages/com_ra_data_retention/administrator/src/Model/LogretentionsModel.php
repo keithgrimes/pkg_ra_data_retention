@@ -69,6 +69,8 @@ class LogretentionsModel extends ListModel
 
 		$context = $this->getUserStateFromRequest($this->context.'.filter.search', 'filter_search');
 		$this->setState('filter.search', $context);
+		$context_logrun = $this->getUserStateFromRequest($this->context.'.jform.logrun', 'jform', 0, 'Array');
+		$this->setState('jform.logrun', $context_logrun['logrun']);
 
 		// Split context into component and optional section
 		if (!empty($context))
@@ -123,7 +125,7 @@ class LogretentionsModel extends ListModel
 		if (JDEBUG) { JLog::add("[models][logretentions] call to getListQuery", JLog::DEBUG, "com_ra_data_retention"); }
 	
 		// Get the ID for the log which needs to be displayed.
-		$logID = $this->getState('filter.logrun', '0'); 
+		$logID = $this->getState('jform.logrun', '0'); 
 		// Get the search filter clause if one has been provided.
 		$search = $this->getState('filter.search');
 
@@ -167,4 +169,39 @@ class LogretentionsModel extends ListModel
 		
 		return $items;
 	}
+
+	public function getForm($data = array(), $loadData = false)
+	{
+		$form = $this->loadForm(
+			'com_ra_data_retention.logfilter',  // just a unique name to identify the form
+			'logfilter_form',				// the filename of the XML form definition
+										// Joomla will look in the site/forms folder for this file
+			array(
+				'control' => 'jform',	 // the name of the array for the POST parameters
+				'load_data' => $loadData // if set to true, then there will be a callback to 
+                                         // loadFormData to supply the data
+			)
+		);
+
+		if (empty($form))
+		{
+            $errors = $this->getErrors();
+			throw new \Exception(implode("\n", $errors), 500);
+		}
+
+		return $form;
+	}
+
+    protected function loadFormData()
+	{
+		// Check the session for previously entered form data.
+		$data = Factory::getApplication()->getUserState(
+			'com_ra_data_retention.logretentions',	// a unique name to identify the data in the session
+            // if no data in session then use the prefill data below ...
+			array("logrun" => "0")	
+		);
+
+		return $data;
+	}
+
 }

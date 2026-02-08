@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix ="Ramblerswebs\Component\Ra_data_retention\Administrator\Field">
+    <fieldset name="logfilter">
+        <field 
+            name="logrun" 
+            type="LogFile"
+            label="COM_RA_DATA_RETENTION_LOGFILTER_FIELD_LABEL" 
+            description="COM_RA_DATA_RETENTION_LOGFILTER_FIELD_DESCRIPTION" 
+            onchange="this.form.submit();">
+
+            <option value="">COM_RA_DATA_RETENTION_LOGFILTER_FIELD_DEFAULT_OPTION</option>
+        </field>
+    </fieldset>
+</form>

@@ -52,6 +52,12 @@ class HtmlView extends BaseHtmlView
 		{
 			throw new \Exception(implode("\n", $errors));
 		}
+		// Get a reference to the current form
+		$this->form = $this->getModel()->getForm();
+		$this->form->bind(array(
+			'logrun' => $this->getState('jform.logrun', '0'),
+			'filter.search' => $this->getState('filter.search', ''), 
+			'filter.limit' => $this->getState('filter.limit', '25')));
 
 		// Add the toolbars for the page
 		$this->addToolbar();

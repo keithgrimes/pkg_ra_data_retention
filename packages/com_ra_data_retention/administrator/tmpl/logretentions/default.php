@@ -48,6 +48,9 @@ if (!empty($saveOrder))
 	<div class="row">
 		<div class="col-md-12">
 			<div id="j-main-container" class="j-main-container">
+				<!-- Display the log Filter -->
+				<?php echo $this->form->renderFieldset('logfilter');  ?>
+
 				<!-- First Render the searchtools before we display the table data -->
 				<?php echo LayoutHelper::render('joomla.searchtools.default', array('view' => $this)); ?>
 

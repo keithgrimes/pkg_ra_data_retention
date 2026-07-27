@@ -7,6 +7,8 @@
 **/
 defined('_JEXEC') or die;
 
+use \Joomla\CMS\Log\Log;
+
 JLoader::register('ra_data_retentionHelper', dirname(__FILE__).
 	DIRECTORY_SEPARATOR.'helpers'.
 	DIRECTORY_SEPARATOR.'ra_data_retention.php');
@@ -14,13 +16,13 @@ JLoader::register('ra_data_retentionHelper', dirname(__FILE__).
 jimport('joomla.application.component.controller');
 
 
-JLog::addLogger(
+Log::addLogger(
        array(
             // Sets file name
             'text_file' => 'pkg_ra_data_retention.log.php'
        ),
            // Sets messages of all log levels to be sent to the file
-       JLog::ALL,
+       Log::ALL,
            // The log category/categories which should be recorded in this file
            // In this case, it's just the one category from our extension, still
            // we need to put it inside an array

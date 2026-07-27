@@ -19,6 +19,7 @@ use \Joomla\CMS\Helper\TagsHelper;
 use \Joomla\Database\ParameterType;
 use \Joomla\Utilities\ArrayHelper;
 use \Joomla\CMS\Component\ComponentHelper;
+use \Joomla\CMS\Log\Log;
 use Ramblerswebs\Component\Ra_data_retention\Administrator\Helper\Ra_data_retentionHelper;
 
 /**
@@ -123,7 +124,7 @@ class FilepathsModel extends ListModel
 		$db    = $this->getDbo();
 		$query = $db->getQuery(true);
 
-		if (JDEBUG) { JLog::add("[models][articleretentions] call to getListQuery", JLog::DEBUG, "com_ra_data_retention"); }
+		if (JDEBUG) { Log::add("[models][articleretentions] call to getListQuery", Log::DEBUG, "com_ra_data_retention"); }
 	
 		$query->select($this->getState('list.select','DISTINCT r.*'))
 			->from($db->quoteName('#__ra_retention_filepaths', 'r'));

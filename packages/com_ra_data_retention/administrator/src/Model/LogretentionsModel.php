@@ -19,6 +19,7 @@ use \Joomla\CMS\Helper\TagsHelper;
 use \Joomla\Database\ParameterType;
 use \Joomla\Utilities\ArrayHelper;
 use \Joomla\CMS\Component\ComponentHelper;
+use \Joomla\CMS\Log\Log;
 use Ramblerswebs\Component\Ra_data_retention\Administrator\Helper\Ra_data_retentionHelper;
 
 /**
@@ -122,7 +123,7 @@ class LogretentionsModel extends ListModel
 		$db    = $this->getDbo();
 		$query = $db->getQuery(true);
 
-		if (JDEBUG) { JLog::add("[models][logretentions] call to getListQuery", JLog::DEBUG, "com_ra_data_retention"); }
+		if (JDEBUG) { Log::add("[models][logretentions] call to getListQuery", Log::DEBUG, "com_ra_data_retention"); }
 	
 		// Get the ID for the log which needs to be displayed.
 		$logID = $this->getState('jform.logrun', '0'); 

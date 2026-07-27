@@ -14,7 +14,7 @@ defined('_JEXEC') or die;
 
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\MVC\Model\DatabaseAwareTrait;
+use Joomla\Database\DatabaseAwareTrait;
 use Joomla\Database\DatabaseDriver;
 
 /**
@@ -33,7 +33,7 @@ class RA_DATA_RETENTION
 	 */
 	public function __construct(DatabaseDriver $db)
 	{
-		$this->setDbo($db);
+		$this->setDatabase($db);
 	}
 
 	public function toggle($value = 0, $view='', $field='', $i='')

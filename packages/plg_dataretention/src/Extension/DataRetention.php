@@ -148,7 +148,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $this->removeRedirects('#__redirect_links', $minredirects);
 
         // Empty out the J2Store orders
-        $this->removeJ2StoreOrders('#__j2store_orders', $minorders);
+        // $this->removeJ2StoreOrders('#__j2store_orders', $minorders);
 
         // Return and error status if there was one.
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
@@ -887,6 +887,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
 
             // Create the exclude array
             $exclude = array();
+            $noreport = array();
             foreach ($paths as $path)
             {
                 // if this is a path to exclude then add to the list
@@ -895,6 +896,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                     // add it to the list
                     array_push($exclude, $path->filepath);
                 }
+                else
+                    if ($path->exclude == 2)
+                    {
+                        array_push($noreport, $path->filepath);
+                    }
             }
             // Now iterate those which are not excluded.
             foreach ($paths as $path)
@@ -902,7 +908,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 if ($path->exclude == 0)
                 {
                     // Now we need to handle the specific path held in $path
-                    $this->RemoveFilesFromPath($path->filepath, $exclude);
+                    $this->RemoveFilesFromPath($path->filepath, $exclude, $noreport);
                     // Remove any empty folders
                     $this->RemoveEmptyDirectoriesFromPath($path->filepath, $exclude);
                 }
@@ -1007,7 +1013,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return $returnval;
     }
 
-    private function RemoveFilesFromPath($path, $excludepaths)
+    private function RemoveFilesFromPath($path, $excludepaths, $noreport)
     {
         // First get a list of the structure of the path
         $fullpath = Path::clean(JPATH_ROOT . '/' . $path) ;
@@ -1034,10 +1040,15 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                     {
                         // Create the full path to the file.
                         $fullfilename = Path::clean($folder['fullname'] . '/' . $file);
-                        //Log the file being removed
-                        ra_data_retentionHelper::logJournal("DELETEFILES", $fullfilename, "");
+                        // Only log if the path has not been listed in the no report version                        
+                        if (!this->excludePath($fullfilename, $noreport))
+                        {
+                            //Log the file being removed, ignoring the root part of the path as it is not relevant to the user.
+                            ra_data_retentionHelper::logJournal("DELETEFILES", substr($fullfilename, strlen(JPATH_ROOT . '/')), $fullfilename);
+                        }
                         // File has not been found so delete it.
-                        File::delete($fullfilename);
+                        
+                        //File::delete($fullfilename);
                     }
                 }
             }

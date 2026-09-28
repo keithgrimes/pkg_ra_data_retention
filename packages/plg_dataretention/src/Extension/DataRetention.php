@@ -749,7 +749,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $file)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("EMPTYTRASH", $table . " - Entry Removed: ". $file['title'], $file['id'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
+                ra_data_retentionHelper::logJournal("EMPTYTRASH", $table . " : ". $file['title'], $file['id'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
             }
 
             $query->delete($db->quoteName($table));

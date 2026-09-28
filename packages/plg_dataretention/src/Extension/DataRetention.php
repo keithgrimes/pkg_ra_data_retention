@@ -1048,7 +1048,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                         }
                         // File has not been found so delete it.
                         
-                        //File::delete($fullfilename);
+                        File::delete($fullfilename);
                     }
                 }
             }

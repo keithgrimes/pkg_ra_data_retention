@@ -801,7 +801,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $file)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("EMPTYTRASH","EventGallery - File Removed: ". $file['file'] . " From Event :" . $file['folder'], $file['description'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
+                ra_data_retentionHelper::logJournal("EMPTYTRASH","EventGallery(File) : ". $file['file'], "EventGallery - File Removed: ". $file['file'] . " From Event :" . $file['folder'] . ' - ' . $file['description'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
             }
     
             $filequery = "DELETE " . $db->quoteName('#__eventgallery_file') . 
@@ -824,7 +824,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $folder)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("EMPTYTRASH","Event Gallery - Event Removed: ". $folder['folder'], $folder['description'] . '/' . $folder['modified'] . '/Months to Keep: ' . $monthsToKeep);
+                ra_data_retentionHelper::logJournal("EMPTYTRASH","Event Gallery(Event): ". $folder['folder'], $folder['description'] . '/' . $folder['modified'] . '/Months to Keep: ' . $monthsToKeep);
             }
 
             // Files should now be gone, so remove the folder

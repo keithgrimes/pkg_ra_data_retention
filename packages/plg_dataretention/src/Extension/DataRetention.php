@@ -1041,7 +1041,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                         // Create the full path to the file.
                         $fullfilename = Path::clean($folder['fullname'] . '/' . $file);
                         // Only log if the path has not been listed in the no report version                        
-                        if (!this->excludePath($fullfilename, $noreport))
+                        if (!$this->excludePath($fullfilename, $noreport))
                         {
                             //Log the file being removed, ignoring the root part of the path as it is not relevant to the user.
                             ra_data_retentionHelper::logJournal("DELETEFILES", substr($fullfilename, strlen(JPATH_ROOT . '/')), $fullfilename);

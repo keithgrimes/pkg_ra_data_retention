@@ -463,10 +463,15 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $query2->from($db->quoteName($table, 'a'));
             $query2->where($conditions);
             $query2->order('a.date DESC');
-            $query2->setLimit($keepCount);
-
-            $db->setQuery($query2);
-            $result = $db->loadColumn(); // This should get you a list of the events.             
+            if ($keepCount > 0)
+            {
+                $query2->setLimit($keepCount);
+                $db->setQuery($query2);
+                $result = $db->loadColumn(); // This should get you a list of the events.             
+            }
+            else {
+                $result = array();
+            }
         }
         catch (Error $e)
         {

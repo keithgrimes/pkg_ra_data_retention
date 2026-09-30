@@ -380,7 +380,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $db->quoteName('a.modified') . ' = NOW()'
             );
 
-            $parameterNames = $select_conditions->bindArray($events);
+            $parameterNames = $select->bindArray($events);
             $select_conditions = array(
                 $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
                 $db->quoteName('rc.testmode') . ' = ' . $testmode,
@@ -389,7 +389,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $db->quoteName('a.id') . ' NOT IN (' . implode(',', $parameterNames) . ')',
                 'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
-            $parameterNames_update = $update_conditions->bindArray($events);
+            $parameterNames_update = $query->bindArray($events);
             $update_conditions = array(
                 $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
                 $db->quoteName('rc.testmode') . ' = ' . $testmode,

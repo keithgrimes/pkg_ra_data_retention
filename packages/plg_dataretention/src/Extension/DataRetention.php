@@ -413,7 +413,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $folder = $file['folder'];
                 $id = $file['id'];
                 $date = $file['date'];
-                ra_data_retentionHelper::logJournal("RETENTION", "EventGallery : ". $folder , $id . "/" . $date );
+                ra_data_retentionHelper::logJournal("RETENTION", "EventGallery : ". $folder , "Event Unpublished: ". $id . "/" . $date );
             }
 
             $query->update($db->quoteName($table, 'a'));

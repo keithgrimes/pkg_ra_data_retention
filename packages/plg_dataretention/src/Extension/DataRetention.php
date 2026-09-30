@@ -402,7 +402,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $select->select($db->quoteName(['a.id', 'a.folder', 'a.date']));
             $select->from($db->quoteName($table, 'a'));
             $select->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-            $select->where($conditions);
+            $select->where($select_conditions);
 
             $db->setQuery($select);
             $result = $db->loadAssocList();

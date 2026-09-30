@@ -496,6 +496,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
 
             $select_conditions = array(
                 $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('a.catid') . ' = ' .$category,
                 $db->quoteName('rc.testmode') . ' = ' . $testmode,
                 $db->quoteName('a.published') . ' = 1',
                 $db->quoteName('rc.months') . ' <> ' . $maxMonths,

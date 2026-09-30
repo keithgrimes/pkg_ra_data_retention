@@ -461,6 +461,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             // Set the state to Trashed and the modified date to the current date and time.
             $query2->select($fields);
             $query2->from($db->quoteName($table, 'a'));
+            $query2->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
             $query2->where($conditions);
             $query2->order('a.date DESC');
             if ($keepCount > 0)

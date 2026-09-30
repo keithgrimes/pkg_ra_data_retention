@@ -443,7 +443,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     private function GetMinEvents($table, $type, $category, $minEvents): array
     {
         $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
         $query2 = $db->getQuery(true); //Query to see if there is already a number of items being displayed
         try {
             $fields = array(
@@ -451,7 +450,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             );
 
             $conditions = array(
-                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
                 $db->quoteName('a.published') . ' = 1',
                 $db->quoteName('a.catid') . ' = ' .$category,
             );
@@ -467,12 +465,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         }
         catch (Error $e)
         {
-            unset($query);
             unset($query2);
             unset($db);    
             return array();
         }
-        unset($query);
         unset($query2);
         unset($db);    
     

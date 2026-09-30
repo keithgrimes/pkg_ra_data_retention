@@ -358,7 +358,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         try {
             // First you need to determine which events need to remain so that you can exclude them from the query
             // Iterate each category getting the event id's to keep
-            $cat_query->select('DISTINCT ' . $db->quoteName('id'));
+            $cat_query->select('DISTINCT ' . $db->quoteName('catid'));
             $cat_query->from($db->quoteName($table));
             $cat_query->where($db->quoteName('published') . ' = 1');
             $db->setQuery($cat_query);

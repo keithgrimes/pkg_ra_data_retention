@@ -366,7 +366,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             // This should now give the categories. Now iterate and get the events to keep
             foreach ($result as $category)
             {
-                $eventsToKeep = $this->GetMinEvents($table, $type, $category, $minEvents);
+                $eventsToKeep = $this->GetMinEvents($table, $type, $category, $minEvents, $testmode, $maxMonths);
                 foreach ($eventsToKeep as $event)
                 {
                     $events[$event] = $event;
@@ -439,8 +439,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return Status::OK;
     }
 
-    private function GetMinEvents($table, $type, $category, $minEvents): array
+    private function GetMinEvents($table, $type, $category, $minEvents, $testmode, $maxMonths): array
     {
+        // Get the number of events we need to keep, which would be unpublished by default.
+        $keepCount = $this->GetEventsKeepCount($table, $type, $category, $minEvents, $testmode, $maxMonths);
         $db    = $this->getDatabase();
         $query2 = $db->getQuery(true); //Query to see if there is already a number of items being displayed
         try {
@@ -449,15 +451,19 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             );
 
             $conditions = array(
-                $db->quoteName('a.published') . ' = 1',
                 $db->quoteName('a.catid') . ' = ' .$category,
+                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('rc.testmode') . ' = ' . $testmode,
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
             // Set the state to Trashed and the modified date to the current date and time.
             $query2->select($fields);
             $query2->from($db->quoteName($table, 'a'));
             $query2->where($conditions);
-            $query2->order('a.date ASC');
-            $query2->setLimit($minEvents);
+            $query2->order('a.date DESC');
+            $query2->setLimit($keepCount);
 
             $db->setQuery($query2);
             $result = $db->loadColumn(); // This should get you a list of the events.             
@@ -471,6 +477,52 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         unset($query2);
         unset($db);    
     
+        return $result;
+    }
+
+    private function GetEventsKeepCount($table, $type, $category, $minEvents, $testmode, $maxMonths): int
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true); //Query to see if there is already a number of items being displayed
+        try {
+            $fields = array(
+                'COUNT(' . $db->quoteName('a.id') . ')'
+            );
+
+            $select_conditions = array(
+                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('rc.testmode') . ' = ' . $testmode,
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) >= CURRENT_DATE()    '
+            );
+            // Set the state to Trashed and the modified date to the current date and time.
+            $query->select($fields);
+            $query->from($db->quoteName($table, 'a'));
+            $query->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
+            $query->where($select_conditions);
+
+            $db->setQuery($query);
+            $events_remaining = $db->loadResult(); // This should get you a list of the events.             
+        }
+        catch (Error $e)
+        {
+            unset($query);
+            unset($db);    
+            return array();
+        }
+        unset($query);
+        unset($db);    
+    
+        if ($events_remaining < $minEvents)
+        {
+            $result = $minEvents - $events_remaining;
+        }
+        else
+        {
+            $result = 0;
+        }
+
         return $result;
     }
 

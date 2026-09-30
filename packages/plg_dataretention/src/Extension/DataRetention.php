@@ -139,16 +139,13 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $this->RemoveUnpublishedTable('#__content', 'ARTICLE', $testmode, $maxretention, $event);
         $status_weblinks =  $this->ApplyRetentionTable('#__weblinks', 'WEBLINKS', $testmode, $maxretention, $event);
         $this->RemoveUnpublishedTable('#__weblinks', 'WEBLINKS', $testmode, $maxretention, $event);
-        $status_events =  $this->ApplyRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $maxretention, $event);
+        $status_events =  $this->ApplyRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $maxretention, $minphoto,$event);
 
         // Limit the number of events. Ensure we hold a minimum number
-        $this->LimitRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $minphoto);
+        //$this->LimitRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $minphoto);
 
         // Empty out the redirect links, only keep those which are published
         $this->removeRedirects('#__redirect_links', $minredirects);
-
-        // Empty out the J2Store orders
-        // $this->removeJ2StoreOrders('#__j2store_orders', $minorders);
 
         // Return and error status if there was one.
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
@@ -230,158 +227,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             return Status::INVALID_EXIT;
         }
         unset($select);
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-
-    private function removeJ2StoreOrders($table, $keepMonths) : int
-    {
-        $db    = $this->getDatabase();
-        $select = $db->getQuery(true);
-        $query = $db->getQuery(true);
-        try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                'DATE_ADD(' . $db->quoteName('modified_on') . ', INTERVAL ' .$keepMonths. ' MONTH) < NOW() '
-            );
-
-            // First log which items are going to be unpublished.
-            $select->select($db->quoteName(['j2store_order_id', 'order_id', 'modified_on']));
-            $select->from($db->quoteName($table));
-            $select->where($conditions);
-
-            $db->setQuery($select);
-            $result = $db->loadAssocList();
-			$datetime_now = date("Y-m-d H:i");
-            foreach ($result as $file)
-            {
-                // Log the Entry
-                $invoice = $file["j2store_order_id"];
-                $order_id = $file["order_id"];
-                $modified_on = $file["modified_on"];
-                ra_data_retentionHelper::logJournal("RETENTION", "Trashing J2Store Order - Invoice: ". $invoice . ' , modified on: ' . $modified_on, $invoice . " / OrderID: " . $order_id);
-            }
-
-            $query->delete($db->quoteName($table));
-            $query->where($conditions);
-    
-            $db->setQuery($query);
-    
-            $result = $db->execute();
-
-            // Now remove child table information for the orders removed
-            $this->removeJ2StoreOrderChild('#__j2store_orderinfos', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_ordertaxes', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_ordershippings', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderitems', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderitemattributes', 'orderitem_id', '#__j2store_orderitems', 'j2store_orderitem_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderhistories', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderdownloads', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderfees', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderdiscounts', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_cartitems', 'cart_id', '#__j2store_carts', 'j2store_cart_id');
-            // Now clear the address / customer table down
-            $this->removeJ2StoreAddresses();
-        }
-        catch (Error $e)
-        {
-            unset($select);
-            unset($query);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($select);
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-
-    private function removeJ2StoreOrderChild($parenttable, $parentcol, $childtable, $childcol) : int
-    {
-        $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
-        try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                $db->quoteName($parentcol) . ' NOT IN (SELECT ' . $db->quoteName($childcol) . ' FROM ' . $db->quoteName($childtable) . ')'
-            );
-
-            $query->delete($db->quoteName($parenttable));
-            $query->where($conditions);
-    
-            $db->setQuery($query);
-    
-            $result = $db->execute();
-        }
-        catch (Error $e)
-        {
-            unset($query);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-
-    private function removeJ2StoreAddresses() : int
-    {
-        $db    = $this->getDatabase();
-        $man_query = $db->getQuery(true);
-        $ven_query = $db->getQuery(true);
-        $order_query = $db->getQuery(true);
-        
-        $query = $db->getQuery(true);
-        try {
-            $man_query->select($db->quoteName('address_id'));
-            $man_query->from($db->quoteName('#__j2store_manufacturers'));
-            $ven_query->select($db->quoteName('address_id'));
-            $ven_query->from($db->quoteName('#__j2store_vendors'));
-
-            $order_query->select($db->quoteName('j2store_address_id'));
-            $order_query->from($db->quoteName('#__j2store_addresses'));
-            $conditions = array(
-                $db->quoteName('email') . ' IN (SELECT ' . $db->quoteName('user_email') . ' FROM ' . $db->quoteName('#__j2store_orders') . ')'
-            );
-            $order_query->where($conditions);
-
-            $db->setQuery($man_query);
-            $man_result = $db->loadColumn();
-            
-            $db->setQuery($ven_query);
-            $ven_result = $db->loadColumn();
-
-            $db->setQuery($order_query);
-            $order_result = $db->loadColumn();
-
-            // Merge the arrays 
-            $results = array_merge($man_result, $ven_result, $order_result);
-
-            // Now we have an array of items to keep, we can delete the remainder
-            $query->delete('#__j2store_addresses');
-            $valid_addresses = $query->bindArray($results);
-            $query->where($db->quoteName('j2store_address_id') . ' NOT IN (' . implode(',', $valid_addresses) . ')');
-            
-            // Execute the delete
-            $db->setQuery($query);
-            $result = $db->execute();
-        }
-        catch (Error $e)
-        {
-            unset($man_query);
-            unset($ven_query);
-            unset($orders_query);
-            unset($query);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($man_query);
-        unset($ven_query);
-        unset($orders_query);
         unset($query);
         unset($db);    
     
@@ -502,23 +347,55 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return Status::OK;
     }
 
-    private function ApplyRetentionEvents($table, $type, $testmode, $maxMonths, ExecuteTaskEvent $event): int
+    private function ApplyRetentionEvents($table, $type, $testmode, $maxMonths, $minEvents, ExecuteTaskEvent $event): int
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
         $select = $db->getQuery(true);
+        $cat_query = $db->getQuery(true);
+        $events = array();
+
         try {
+            // First you need to determine which events need to remain so that you can exclude them from the query
+            // Iterate each category getting the event id's to keep
+            $cat_query->select('DISTINCT ' . $db->quoteName('id'));
+            $cat_query->from($db->quoteName($table));
+            $cat_query->where($db->quoteName('published') . ' = 1');
+            $db->setQuery($cat_query);
+            $result = $db->loadColumn();
+            // This should now give the categories. Now iterate and get the events to keep
+            foreach ($result as $category)
+            {
+                $eventsToKeep = $this->GetMinEvents($table, $type, $category, $minEvents);
+                foreach ($eventsToKeep as $event)
+                {
+                    $events[$event] = $event;
+                }
+            }
+            unset($cat_query);
+
             // Set the state to Trashed and the modified date to the current date and time.
             $fields = array(
                 $db->quoteName('a.published') . ' = 0', 
                 $db->quoteName('a.modified') . ' = NOW()'
             );
 
-            $conditions = array(
+            $parameterNames = $select_conditions->bindArray($events);
+            $select_conditions = array(
                 $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
                 $db->quoteName('rc.testmode') . ' = ' . $testmode,
                 $db->quoteName('a.published') . ' = 1',
                 $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                $db->quoteName('a.id') . ' NOT IN (' . implode(',', $parameterNames) . ')',
+                'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
+            );
+            $parameterNames_update = $update_conditions->bindArray($events);
+            $update_conditions = array(
+                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('rc.testmode') . ' = ' . $testmode,
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                $db->quoteName('a.id') . ' NOT IN (' . implode(',', $parameterNames_update) . ')',
                 'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
             // First log which items are going to be unpublished.
@@ -526,6 +403,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $select->from($db->quoteName($table, 'a'));
             $select->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
             $select->where($conditions);
+            $query->where();
 
             $db->setQuery($select);
             $result = $db->loadAssocList();
@@ -542,11 +420,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             $query->update($db->quoteName($table, 'a'));
             $query->set($fields);
             $query->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-            $query->where($conditions);
+            $query->where($update_conditions);
     
             $db->setQuery($query);
     
-            $result = $db->execute();
+            //$result = $db->execute();
         }
         catch (Error $e)
         {
@@ -561,6 +439,46 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     
         return Status::OK;
     }
+
+    private function GetMinEvents($table, $type, $category, $minEvents): array
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true);
+        $query2 = $db->getQuery(true); //Query to see if there is already a number of items being displayed
+        try {
+            $fields = array(
+                $db->quoteName('a.id')
+            );
+
+            $conditions = array(
+                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('a.catid') . ' = ' .$category,
+            );
+            // Set the state to Trashed and the modified date to the current date and time.
+            $query2->select($fields);
+            $query2->from($db->quoteName($table, 'a'));
+            $query2->where($conditions);
+            $query2->order('a.date ASC');
+            $query2->setLimit($minEvents);
+
+            $db->setQuery($query2);
+            $result = $db->loadColumn(); // This should get you a list of the events.             
+        }
+        catch (Error $e)
+        {
+            unset($query);
+            unset($query2);
+            unset($db);    
+            return array();
+        }
+        unset($query);
+        unset($query2);
+        unset($db);    
+    
+        return $result;
+    }
+
 
     private function LimitRetentionEvents($table, $type, $testmode, $minEvents): int
     {

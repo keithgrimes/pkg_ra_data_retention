@@ -350,7 +350,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $query = $db->getQuery(true);
         $select = $db->getQuery(true);
         $cat_query = $db->getQuery(true);
-        $events = array();
+        $events = array(0 => 0);
 
         try {
             // First you need to determine which events need to remain so that you can exclude them from the query

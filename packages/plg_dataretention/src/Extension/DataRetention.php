@@ -141,9 +141,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $this->RemoveUnpublishedTable('#__weblinks', 'WEBLINKS', $testmode, $maxretention, $event);
         $status_events =  $this->ApplyRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $maxretention, $minphoto,$event);
 
-        // Limit the number of events. Ensure we hold a minimum number
-        //$this->LimitRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $minphoto);
-
         // Empty out the redirect links, only keep those which are published
         $this->removeRedirects('#__redirect_links', $minredirects);
 
@@ -423,7 +420,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
     
             $db->setQuery($query);
     
-            //$result = $db->execute();
+            $result = $db->execute();
         }
         catch (Error $e)
         {
@@ -533,121 +530,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return $result;
     }
 
-
-    private function LimitRetentionEvents($table, $type, $testmode, $minEvents): int
-    {
-        $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
-        try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                $db->quoteName('a.type') . ' = ' . $db->quote($type), 
-                $db->quoteName('a.testmode') . ' = ' . $testmode
-            );
-            
-
-            $query->select($db->quoteName('a.catid'));
-            $query->from($db->quoteName('#__ra_retention_categories', 'a'));
-            $query->where($conditions);
-            
-            $db->setQuery($query);
-    
-            $result = $db->loadObjectList();
-
-            $queryPublish = $db->getQuery(true);
-            $queryPublish->update($db->quoteName($table));
-            $queryPublish->set($db->quoteName('published') . " = 1");
-            $queryPublish->where($db->quoteName('id') . ' = :idval');
-            foreach ($result as $category)
-            {
-                // Get the top n events
-                $eventsToKeep = $this->GetTopEvents($table, $type, $testmode, $category->catid, $minEvents);
-                foreach ($eventsToKeep as $event)
-                {
-                    ra_data_retentionHelper::logJournal("RETENTION", "EventGallery (" . $table . ") - Keeping Folder with ID: ". $event, $event);
-
-                    // Need to keep this event, so set it back to published
-                    $queryPublish->bind(':idval', $event);
-                    $db->setQuery($queryPublish);
-                    $db->execute();
-                }
-            }
-            unset($queryPublish);
-        }
-        catch (Error $e)
-        {
-            unset($query);
-            unset($queryPublish);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-    private function GetTopEvents($table, $type, $testmode, $category, $minEvents): array
-    {
-        $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
-        $query2 = $db->getQuery(true); //Query to see if there is already a number of items being displayed
-        try {
-            $fields = array(
-                $db->quoteName('a.id')
-            );
-
-            $conditions = array(
-                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
-                $db->quoteName('rc.testmode') . ' = ' . $testmode,
-                $db->quoteName('a.published') . ' = 0',
-                $db->quoteName('a.catid') . ' = ' .$category,
-            );
-            // Set the state to Trashed and the modified date to the current date and time.
-            $query2->select('COUNT(' .$db->quoteName('a.id'). ')');
-            $query2->from($db->quoteName($table, 'a'));
-            $query2->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-            $query2->where(array(
-                $db->quoteName('a.published') . ' = 1',
-                $db->quoteName('rc.type') . ' = ' . $db->quote($type),
-                $db->quoteName('a.catid') . ' = ' .$category
-            ));
-
-            $db->setQuery($query2);
-            $countPublished = $db->loadResult();
-            
-            // Check to see if we are displaying enough items
-            if ($countPublished < $minEvents)
-            {
-                // We are not displaying enough events so find some more
-
-                $query->select($db->quoteName('a.id'));
-                $query->from($db->quoteName($table, 'a'));
-                $query->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-                $query->where($conditions);
-                $query->order('date DESC LIMIT ' . ($minEvents - $countPublished));
-                
-                $db->setQuery($query);
-        
-                $result = $db->loadColumn();
-            }
-            else{
-                // Return an empty array so there is nothing to add
-                $result = array();
-            }
-        }
-        catch (Error $e)
-        {
-            unset($query);
-            unset($query2);
-            unset($db);    
-            return array();
-        }
-        unset($query);
-        unset($query2);
-        unset($db);    
-    
-        return $result;
-    }
     /**
      * Method for removing items located within the trash as part of retention policy.
      *

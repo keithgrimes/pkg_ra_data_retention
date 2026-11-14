@@ -1,0 +1,44 @@
+name: Create a Release for the Data Retention Package
+run-name: ${{ github.actor }} is creating a release 🚀
+on:
+  push:
+    branches: 
+      - main 
+jobs:
+  Create-Release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Move to the working directory
+        run: pushd ${{ github.workspace }}
+      - name: Get Version for the Release
+        run: php .github/workflows/GetReleaseDetail.php package/pkg_ra_data_retention.xml version VERSION
+      - name: show the version found
+        run: echo "Version Found is ${{ env.VERSION }}"
+      - name: Create the package zip file for the release
+        run: | 
+          zip -r com_ra_data_retention.zip package/compoenents/com_ra_data_retention
+          zip -r plg_ra_data_retention.zip package/components/plg_ra_data_retention
+          mkdir pkg_ra_data_retention
+          mkdir pkg_ra_data_retention/components
+          cp com_ra_data_retention.zip pkg_ra_data_retention/components/
+          cp plg_ra_data_retention.zip pkg_ra_data_retention/components/
+          cp pkg_ra_data_retention.xml pkg_ra_data_retention/
+          zip -r pkg_ra_data_retention-${{ env.VERSION }}.zip pkg_ra_data_retention
+      - name: List the files in the repository
+        run: ls -al
+
+      - name: Create GitHub Release with Auto-Generated Notes
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          generateReleaseNotes: true  # Auto-generate release notes based on PRs and commits
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "pkg_ra_data_retention-${{ env.VERSION }}.zip"

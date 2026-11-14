@@ -31,7 +31,7 @@ jobs:
           mkdir pkg_ra_data_retention/components
           cp com_ra_data_retention.zip pkg_ra_data_retention/components/
           cp plg_ra_data_retention.zip pkg_ra_data_retention/components/
-          cp pkg_ra_data_retention.xml pkg_ra_data_retention/
+          cp package/pkg_ra_data_retention.xml pkg_ra_data_retention/
           zip -r pkg_ra_data_retention-${{ env.VERSION }}.zip pkg_ra_data_retention
       - name: List the files in the repository
         run: ls -al

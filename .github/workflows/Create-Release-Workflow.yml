@@ -23,7 +23,7 @@ jobs:
         run: echo "Version Found is ${{ env.VERSION }}"
       - name: Create the package zip file for the release
         run: | 
-          pushd package/componennts
+          pushd package/components
           zip -r ${{ github.workspace }}/com_ra_data_retention.zip com_ra_data_retention
           zip -r ${{ github.workspace }}/plg_ra_data_retention.zip plg_ra_data_retention
           popd

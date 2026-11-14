@@ -139,16 +139,10 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         $this->RemoveUnpublishedTable('#__content', 'ARTICLE', $testmode, $maxretention, $event);
         $status_weblinks =  $this->ApplyRetentionTable('#__weblinks', 'WEBLINKS', $testmode, $maxretention, $event);
         $this->RemoveUnpublishedTable('#__weblinks', 'WEBLINKS', $testmode, $maxretention, $event);
-        $status_events =  $this->ApplyRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $maxretention, $event);
-
-        // Limit the number of events. Ensure we hold a minimum number
-        $this->LimitRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $minphoto);
+        $status_events =  $this->ApplyRetentionEvents('#__eventgallery_folder', 'PHOTO', $testmode, $maxretention, $minphoto,$event);
 
         // Empty out the redirect links, only keep those which are published
         $this->removeRedirects('#__redirect_links', $minredirects);
-
-        // Empty out the J2Store orders
-        $this->removeJ2StoreOrders('#__j2store_orders', $minorders);
 
         // Return and error status if there was one.
         $return_status = ($status_content != Status::OK || $status_weblinks != Status::OK || $status_events != Status::OK) ? Status::INVALID_EXIT : Status::OK;
@@ -230,158 +224,6 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             return Status::INVALID_EXIT;
         }
         unset($select);
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-
-    private function removeJ2StoreOrders($table, $keepMonths) : int
-    {
-        $db    = $this->getDatabase();
-        $select = $db->getQuery(true);
-        $query = $db->getQuery(true);
-        try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                'DATE_ADD(' . $db->quoteName('modified_on') . ', INTERVAL ' .$keepMonths. ' MONTH) < NOW() '
-            );
-
-            // First log which items are going to be unpublished.
-            $select->select($db->quoteName(['j2store_order_id', 'order_id', 'modified_on']));
-            $select->from($db->quoteName($table));
-            $select->where($conditions);
-
-            $db->setQuery($select);
-            $result = $db->loadAssocList();
-			$datetime_now = date("Y-m-d H:i");
-            foreach ($result as $file)
-            {
-                // Log the Entry
-                $invoice = $file["j2store_order_id"];
-                $order_id = $file["order_id"];
-                $modified_on = $file["modified_on"];
-                ra_data_retentionHelper::logJournal("RETENTION", "Trashing J2Store Order - Invoice: ". $invoice . ' , modified on: ' . $modified_on, $invoice . " / OrderID: " . $order_id);
-            }
-
-            $query->delete($db->quoteName($table));
-            $query->where($conditions);
-    
-            $db->setQuery($query);
-    
-            $result = $db->execute();
-
-            // Now remove child table information for the orders removed
-            $this->removeJ2StoreOrderChild('#__j2store_orderinfos', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_ordertaxes', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_ordershippings', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderitems', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderitemattributes', 'orderitem_id', '#__j2store_orderitems', 'j2store_orderitem_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderhistories', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderdownloads', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderfees', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_orderdiscounts', 'order_id', '#__j2store_orders', 'order_id');
-            $this->removeJ2StoreOrderChild('#__j2store_cartitems', 'cart_id', '#__j2store_carts', 'j2store_cart_id');
-            // Now clear the address / customer table down
-            $this->removeJ2StoreAddresses();
-        }
-        catch (Error $e)
-        {
-            unset($select);
-            unset($query);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($select);
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-
-    private function removeJ2StoreOrderChild($parenttable, $parentcol, $childtable, $childcol) : int
-    {
-        $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
-        try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                $db->quoteName($parentcol) . ' NOT IN (SELECT ' . $db->quoteName($childcol) . ' FROM ' . $db->quoteName($childtable) . ')'
-            );
-
-            $query->delete($db->quoteName($parenttable));
-            $query->where($conditions);
-    
-            $db->setQuery($query);
-    
-            $result = $db->execute();
-        }
-        catch (Error $e)
-        {
-            unset($query);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-
-    private function removeJ2StoreAddresses() : int
-    {
-        $db    = $this->getDatabase();
-        $man_query = $db->getQuery(true);
-        $ven_query = $db->getQuery(true);
-        $order_query = $db->getQuery(true);
-        
-        $query = $db->getQuery(true);
-        try {
-            $man_query->select($db->quoteName('address_id'));
-            $man_query->from($db->quoteName('#__j2store_manufacturers'));
-            $ven_query->select($db->quoteName('address_id'));
-            $ven_query->from($db->quoteName('#__j2store_vendors'));
-
-            $order_query->select($db->quoteName('j2store_address_id'));
-            $order_query->from($db->quoteName('#__j2store_addresses'));
-            $conditions = array(
-                $db->quoteName('email') . ' IN (SELECT ' . $db->quoteName('user_email') . ' FROM ' . $db->quoteName('#__j2store_orders') . ')'
-            );
-            $order_query->where($conditions);
-
-            $db->setQuery($man_query);
-            $man_result = $db->loadColumn();
-            
-            $db->setQuery($ven_query);
-            $ven_result = $db->loadColumn();
-
-            $db->setQuery($order_query);
-            $order_result = $db->loadColumn();
-
-            // Merge the arrays 
-            $results = array_merge($man_result, $ven_result, $order_result);
-
-            // Now we have an array of items to keep, we can delete the remainder
-            $query->delete('#__j2store_addresses');
-            $valid_addresses = $query->bindArray($results);
-            $query->where($db->quoteName('j2store_address_id') . ' NOT IN (' . implode(',', $valid_addresses) . ')');
-            
-            // Execute the delete
-            $db->setQuery($query);
-            $result = $db->execute();
-        }
-        catch (Error $e)
-        {
-            unset($man_query);
-            unset($ven_query);
-            unset($orders_query);
-            unset($query);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($man_query);
-        unset($ven_query);
-        unset($orders_query);
         unset($query);
         unset($db);    
     
@@ -502,30 +344,62 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return Status::OK;
     }
 
-    private function ApplyRetentionEvents($table, $type, $testmode, $maxMonths, ExecuteTaskEvent $event): int
+    private function ApplyRetentionEvents($table, $type, $testmode, $maxMonths, $minEvents, ExecuteTaskEvent $event): int
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
         $select = $db->getQuery(true);
+        $cat_query = $db->getQuery(true);
+        $events = array(0 => 0);
+
         try {
+            // First you need to determine which events need to remain so that you can exclude them from the query
+            // Iterate each category getting the event id's to keep
+            $cat_query->select('DISTINCT ' . $db->quoteName('catid'));
+            $cat_query->from($db->quoteName($table));
+            $cat_query->where($db->quoteName('published') . ' = 1');
+            $db->setQuery($cat_query);
+            $result = $db->loadColumn();
+            // This should now give the categories. Now iterate and get the events to keep
+            foreach ($result as $category)
+            {
+                $eventsToKeep = $this->GetMinEvents($table, $type, $category, $minEvents, $testmode, $maxMonths);
+                foreach ($eventsToKeep as $event)
+                {
+                    $events[$event] = $event;
+                }
+            }
+            unset($cat_query);
+
             // Set the state to Trashed and the modified date to the current date and time.
             $fields = array(
                 $db->quoteName('a.published') . ' = 0', 
                 $db->quoteName('a.modified') . ' = NOW()'
             );
 
-            $conditions = array(
+            $parameterNames = $select->bindArray($events);
+            $select_conditions = array(
                 $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
                 $db->quoteName('rc.testmode') . ' = ' . $testmode,
                 $db->quoteName('a.published') . ' = 1',
                 $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                $db->quoteName('a.id') . ' NOT IN (' . implode(',', $parameterNames) . ')',
+                'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
+            );
+            $parameterNames_update = $query->bindArray($events);
+            $update_conditions = array(
+                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('rc.testmode') . ' = ' . $testmode,
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                $db->quoteName('a.id') . ' NOT IN (' . implode(',', $parameterNames_update) . ')',
                 'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
             // First log which items are going to be unpublished.
             $select->select($db->quoteName(['a.id', 'a.folder', 'a.date']));
             $select->from($db->quoteName($table, 'a'));
             $select->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-            $select->where($conditions);
+            $select->where($select_conditions);
 
             $db->setQuery($select);
             $result = $db->loadAssocList();
@@ -536,13 +410,13 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 $folder = $file['folder'];
                 $id = $file['id'];
                 $date = $file['date'];
-                ra_data_retentionHelper::logJournal("RETENTION", "EventGallery (" . $table . ") - Unpublishing Folder: ". $folder , $id . "/" . $date );
+                ra_data_retentionHelper::logJournal("RETENTION", "EventGallery : ". $folder , "Event Unpublished: ". $id . "/" . $date );
             }
 
             $query->update($db->quoteName($table, 'a'));
             $query->set($fields);
             $query->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-            $query->where($conditions);
+            $query->where($update_conditions);
     
             $db->setQuery($query);
     
@@ -562,62 +436,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return Status::OK;
     }
 
-    private function LimitRetentionEvents($table, $type, $testmode, $minEvents): int
+    private function GetMinEvents($table, $type, $category, $minEvents, $testmode, $maxMonths): array
     {
+        // Get the number of events we need to keep, which would be unpublished by default.
+        $keepCount = $this->GetEventsKeepCount($table, $type, $category, $minEvents, $testmode, $maxMonths);
         $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
-        try {
-            // Set the state to Trashed and the modified date to the current date and time.
-            $conditions = array(
-                $db->quoteName('a.type') . ' = ' . $db->quote($type), 
-                $db->quoteName('a.testmode') . ' = ' . $testmode
-            );
-            
-
-            $query->select($db->quoteName('a.catid'));
-            $query->from($db->quoteName('#__ra_retention_categories', 'a'));
-            $query->where($conditions);
-            
-            $db->setQuery($query);
-    
-            $result = $db->loadObjectList();
-
-            $queryPublish = $db->getQuery(true);
-            $queryPublish->update($db->quoteName($table));
-            $queryPublish->set($db->quoteName('published') . " = 1");
-            $queryPublish->where($db->quoteName('id') . ' = :idval');
-            foreach ($result as $category)
-            {
-                // Get the top n events
-                $eventsToKeep = $this->GetTopEvents($table, $type, $testmode, $category->catid, $minEvents);
-                foreach ($eventsToKeep as $event)
-                {
-                    ra_data_retentionHelper::logJournal("RETENTION", "EventGallery (" . $table . ") - Keeping Folder with ID: ". $event, $event);
-
-                    // Need to keep this event, so set it back to published
-                    $queryPublish->bind(':idval', $event);
-                    $db->setQuery($queryPublish);
-                    $db->execute();
-                }
-            }
-            unset($queryPublish);
-        }
-        catch (Error $e)
-        {
-            unset($query);
-            unset($queryPublish);
-            unset($db);    
-            return Status::INVALID_EXIT;
-        }
-        unset($query);
-        unset($db);    
-    
-        return Status::OK;
-    }
-    private function GetTopEvents($table, $type, $testmode, $category, $minEvents): array
-    {
-        $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
         $query2 = $db->getQuery(true); //Query to see if there is already a number of items being displayed
         try {
             $fields = array(
@@ -625,57 +448,88 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             );
 
             $conditions = array(
+                $db->quoteName('a.catid') . ' = ' .$category,
                 $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
                 $db->quoteName('rc.testmode') . ' = ' . $testmode,
-                $db->quoteName('a.published') . ' = 0',
-                $db->quoteName('a.catid') . ' = ' .$category,
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) < CURRENT_DATE()    '
             );
             // Set the state to Trashed and the modified date to the current date and time.
-            $query2->select('COUNT(' .$db->quoteName('a.id'). ')');
+            $query2->select($fields);
             $query2->from($db->quoteName($table, 'a'));
             $query2->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-            $query2->where(array(
-                $db->quoteName('a.published') . ' = 1',
-                $db->quoteName('rc.type') . ' = ' . $db->quote($type),
-                $db->quoteName('a.catid') . ' = ' .$category
-            ));
-
-            $db->setQuery($query2);
-            $countPublished = $db->loadResult();
-            
-            // Check to see if we are displaying enough items
-            if ($countPublished < $minEvents)
+            $query2->where($conditions);
+            $query2->order('a.date DESC');
+            if ($keepCount > 0)
             {
-                // We are not displaying enough events so find some more
-
-                $query->select($db->quoteName('a.id'));
-                $query->from($db->quoteName($table, 'a'));
-                $query->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
-                $query->where($conditions);
-                $query->order('date DESC LIMIT ' . ($minEvents - $countPublished));
-                
-                $db->setQuery($query);
-        
-                $result = $db->loadColumn();
+                $query2->setLimit($keepCount);
+                $db->setQuery($query2);
+                $result = $db->loadColumn(); // This should get you a list of the events.             
             }
-            else{
-                // Return an empty array so there is nothing to add
+            else {
                 $result = array();
             }
         }
         catch (Error $e)
         {
-            unset($query);
             unset($query2);
             unset($db);    
             return array();
         }
-        unset($query);
         unset($query2);
         unset($db);    
     
         return $result;
     }
+
+    private function GetEventsKeepCount($table, $type, $category, $minEvents, $testmode, $maxMonths): int
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true); //Query to see if there is already a number of items being displayed
+        try {
+            $fields = array(
+                'COUNT(' . $db->quoteName('a.id') . ')'
+            );
+
+            $select_conditions = array(
+                $db->quoteName('rc.type') . ' = ' . $db->quote($type), 
+                $db->quoteName('a.catid') . ' = ' .$category,
+                $db->quoteName('rc.testmode') . ' = ' . $testmode,
+                $db->quoteName('a.published') . ' = 1',
+                $db->quoteName('rc.months') . ' <> ' . $maxMonths,
+                'DATE_ADD(' . $db->quoteName('a.date') . ', INTERVAL rc.months MONTH) >= CURRENT_DATE()    '
+            );
+            // Set the state to Trashed and the modified date to the current date and time.
+            $query->select($fields);
+            $query->from($db->quoteName($table, 'a'));
+            $query->join('INNER', $db->quoteName('#__ra_calc_retention_categories','rc') . ' ON ' . $db->quoteName('a.catid') . '=' . $db->quoteName('rc.catid'));
+            $query->where($select_conditions);
+
+            $db->setQuery($query);
+            $events_remaining = $db->loadResult(); // This should get you a list of the events.             
+        }
+        catch (Error $e)
+        {
+            unset($query);
+            unset($db);    
+            return array();
+        }
+        unset($query);
+        unset($db);    
+    
+        if ($events_remaining < $minEvents)
+        {
+            $result = $minEvents - $events_remaining;
+        }
+        else
+        {
+            $result = 0;
+        }
+
+        return $result;
+    }
+
     /**
      * Method for removing items located within the trash as part of retention policy.
      *
@@ -749,7 +603,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $file)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("EMPTYTRASH", $table . " - Entry Removed: ". $file['title'], $file['id'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
+                ra_data_retentionHelper::logJournal("EMPTYTRASH", $table . " : ". $file['title'], $file['id'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
             }
 
             $query->delete($db->quoteName($table));
@@ -801,7 +655,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $file)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("EMPTYTRASH","EventGallery - File Removed: ". $file['file'] . " From Event :" . $file['folder'], $file['description'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
+                ra_data_retentionHelper::logJournal("EMPTYTRASH","EventGallery(File) : ". $file['file'], "EventGallery - File Removed: ". $file['file'] . " From Event :" . $file['folder'] . ' - ' . $file['description'] . '/' . $file['modified'] . '/Months to Keep: ' . $monthsToKeep);
             }
     
             $filequery = "DELETE " . $db->quoteName('#__eventgallery_file') . 
@@ -824,7 +678,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
             foreach ($result as $folder)
             {
                 // Log the Entry
-                ra_data_retentionHelper::logJournal("EMPTYTRASH","Event Gallery - Event Removed: ". $folder['folder'], $folder['description'] . '/' . $folder['modified'] . '/Months to Keep: ' . $monthsToKeep);
+                ra_data_retentionHelper::logJournal("EMPTYTRASH","Event Gallery(Event): ". $folder['folder'], $folder['description'] . '/' . $folder['modified'] . '/Months to Keep: ' . $monthsToKeep);
             }
 
             // Files should now be gone, so remove the folder
@@ -887,6 +741,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
 
             // Create the exclude array
             $exclude = array();
+            $noreport = array();
             foreach ($paths as $path)
             {
                 // if this is a path to exclude then add to the list
@@ -895,6 +750,11 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                     // add it to the list
                     array_push($exclude, $path->filepath);
                 }
+                else
+                    if ($path->exclude == 2)
+                    {
+                        array_push($noreport, $path->filepath);
+                    }
             }
             // Now iterate those which are not excluded.
             foreach ($paths as $path)
@@ -902,7 +762,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                 if ($path->exclude == 0)
                 {
                     // Now we need to handle the specific path held in $path
-                    $this->RemoveFilesFromPath($path->filepath, $exclude);
+                    $this->RemoveFilesFromPath($path->filepath, $exclude, $noreport);
                     // Remove any empty folders
                     $this->RemoveEmptyDirectoriesFromPath($path->filepath, $exclude);
                 }
@@ -1007,7 +867,7 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
         return $returnval;
     }
 
-    private function RemoveFilesFromPath($path, $excludepaths)
+    private function RemoveFilesFromPath($path, $excludepaths, $noreport)
     {
         // First get a list of the structure of the path
         $fullpath = Path::clean(JPATH_ROOT . '/' . $path) ;
@@ -1034,9 +894,14 @@ final class DataRetention extends CMSPlugin implements SubscriberInterface
                     {
                         // Create the full path to the file.
                         $fullfilename = Path::clean($folder['fullname'] . '/' . $file);
-                        //Log the file being removed
-                        ra_data_retentionHelper::logJournal("DELETEFILES", $fullfilename, "");
+                        // Only log if the path has not been listed in the no report version                        
+                        if (!$this->excludePath($fullfilename, $noreport))
+                        {
+                            //Log the file being removed, ignoring the root part of the path as it is not relevant to the user.
+                            ra_data_retentionHelper::logJournal("DELETEFILES", substr($fullfilename, strlen(JPATH_ROOT . '/')), $fullfilename);
+                        }
                         // File has not been found so delete it.
+                        
                         File::delete($fullfilename);
                     }
                 }

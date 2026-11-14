@@ -152,8 +152,8 @@ if (!empty($saveOrder))
 								<?php endif; ?>
 							</td>
 							<td>
-								<?php echo $this->escape($item->exclude == 1 ? 'YES': 'NO'); ?>
-							</td>
+								<?php echo $this->escape($item->exclude == 0 ? 'INCLUDE' : ($item->exclude == 1 ? 'EXCLUDE' : 'NOREPORT')); ?>
+							</td>	
 							
 							<td class="d-none d-lg-table-cell">
 							<?php echo $item->id; ?>

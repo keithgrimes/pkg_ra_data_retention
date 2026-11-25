@@ -1,9 +1,6 @@
-name: Create a Release for the Data Retention Package
-run-name: ${{ github.actor }} is creating a release 🚀
-on:
-  push:
-    branches: 
-      - main 
+name: Data Retention Package Build and Release Workflow
+run-name: Data Retention Build🚀
+on: [push, workflow_dispatch]
 jobs:
   Create-Release:
     runs-on: ubuntu-latest
@@ -18,7 +15,7 @@ jobs:
       - name: Move to the working directory
         run: pushd ${{ github.workspace }}
       - name: Get Version for the Release
-        run: php .github/workflows/GetReleaseDetail.php package/pkg_ra_data_retention.xml version VERSION
+        run: php .github/workflows/GetBuildVersion.php package/pkg_ra_data_retention.xml ${{ github.ref }} version VERSION
       - name: show the version found
         run: echo "Version Found is ${{ env.VERSION }}"
       - name: Update the versions on the subcomponents to match the package version
